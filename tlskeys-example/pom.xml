@@ -33,7 +33,7 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <id>unix-bin</id>
+            <id>assembly-rsa</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
@@ -41,6 +41,20 @@
             <configuration>
               <descriptors>
                 <descriptor>src/main/descriptors/assembly-rsa.xml</descriptor>
+              </descriptors>
+              <appendAssemblyId>true</appendAssemblyId>
+              <tarLongFileMode>posix</tarLongFileMode>
+            </configuration>
+          </execution>
+          <execution>
+            <id>assembly-ec</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/descriptors/assembly-ec.xml</descriptor>
               </descriptors>
               <appendAssemblyId>true</appendAssemblyId>
               <tarLongFileMode>posix</tarLongFileMode>

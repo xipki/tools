@@ -15,14 +15,14 @@
   limitations under the License.
 -->
 <assembly>
-  <id>rsa</id>
+  <id>ec</id>
   <formats>
     <format>zip</format>
   </formats>
   <includeBaseDirectory>false</includeBaseDirectory>
   <fileSets>
     <fileSet>
-      <directory>src/main/resources/rsa</directory>
+      <directory>src/main/resources/ec</directory>
       <outputDirectory>.</outputDirectory>
       <fileMode>0644</fileMode>
       <directoryMode>0755</directoryMode>
