@@ -26,7 +26,7 @@
   <groupId>org.xipki.tools</groupId>
   <artifactId>tools-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>XiPKI tools :: ${project.artifactId}</name>
   <description>XiPKI Tools Parent</description>
   <url>http://xipki.org</url>
