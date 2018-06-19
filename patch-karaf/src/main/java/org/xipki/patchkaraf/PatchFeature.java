@@ -182,7 +182,7 @@ public class PatchFeature {
     sb.append("\n\t--file");
     sb.append("\n\t\tFile to be patched");
     sb.append("\n\t--backup");
-    sb.append("\n\t\tWhether to create a backup of the patched file (with appendxi .orig)");
+    sb.append("\n\t\tWhether to create a backup of the patched file (with appendix .orig)");
     sb.append("\n\t\t(defaults to true)");
     sb.append("\n\t--repos");
     sb.append("\n\t\tComma-separated repositories");
