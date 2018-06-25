@@ -105,12 +105,12 @@ public class PatchAppend {
 
     if (backup) {
       File origFile = new File(fileName + ".orig");
-      if (!file.renameTo(origFile)) {
+      if (!PatchUtil.rename(file, origFile)) {
         return printUsage("could not rename " + file.getPath() + " to " + origFile.getPath());
       }
     }
 
-    if (!tmpNewFile.renameTo(file)) {
+    if (!PatchUtil.rename(tmpNewFile, file)) {
       return printUsage("could not rename " + tmpNewFile.getPath() + " to " + file.getPath());
     }
 

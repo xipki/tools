@@ -18,6 +18,7 @@
 package org.xipki.patchkaraf;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -76,4 +77,11 @@ class PatchUtil {
     return buf.toString();
   }
 
+  public static boolean rename(File from, File to) {
+    if (to.exists()) {
+      to.delete();
+    }
+
+    return from.renameTo(to);
+  }
 }
