@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 /**
@@ -52,7 +54,7 @@ public class PatchFeature {
 
     String fileName = null;
     String repos = null;
-    String features = null;
+    String featuresStr = null;
     boolean backup = true;
 
     for (int i = 0; i < args.length; i += 2) {
@@ -63,7 +65,7 @@ public class PatchFeature {
       } else if ("--repos".equalsIgnoreCase(option)) {
         repos = value;
       } else if ("--features".equalsIgnoreCase(option)) {
-        features = value;
+        featuresStr = value.trim();
       } else if ("--backup".equalsIgnoreCase(option)) {
         backup = Boolean.parseBoolean(value);
       }
@@ -73,7 +75,50 @@ public class PatchFeature {
       return printUsage("file is not specified");
     }
 
-    if (PatchUtil.isBlank(repos) && PatchUtil.isBlank(features)) {
+    if (PatchUtil.isBlank(repos) && PatchUtil.isBlank(featuresStr)) {
+      return printUsage("nothing to patch");
+    }
+
+    List<String> featuresToRemove = new LinkedList<>();
+    List<String> featuresToAddPhase0 = new LinkedList<>();
+    List<String> featuresToAddPhase1 = new LinkedList<>();
+    boolean addPhase = featuresStr.startsWith("(");
+
+    if (addPhase) {
+      int phase0EndIndex = featuresStr.indexOf(')');
+      String phase0FeaturesStr = featuresStr.substring(1, phase0EndIndex);
+      featuresStr = featuresStr.substring(phase0EndIndex + 1);
+      StringTokenizer tokenizer = new StringTokenizer(phase0FeaturesStr, ", ");
+      while (tokenizer.hasMoreTokens()) {
+        String token = tokenizer.nextToken();
+        if (token.startsWith("-")) {
+          featuresToRemove.add(token.substring(1));
+        } else {
+          featuresToAddPhase0.add(token);
+        }
+      }
+    }
+
+    StringTokenizer tokenizer = new StringTokenizer(featuresStr, ", ");
+    while (tokenizer.hasMoreTokens()) {
+      String token = tokenizer.nextToken();
+      if (token.startsWith("-")) {
+        featuresToRemove.add(token.substring(1));
+      } else {
+        featuresToAddPhase1.add(token);
+      }
+    }
+
+    if (featuresToAddPhase1.isEmpty()) {
+      addPhase = false;
+    }
+
+    boolean patchBootFeatures = addPhase
+        || !(featuresToRemove.isEmpty()
+            && featuresToAddPhase0.isEmpty()
+            && featuresToAddPhase1.isEmpty());
+
+    if (PatchUtil.isBlank(repos) && !patchBootFeatures) {
       return printUsage("nothing to patch");
     }
 
@@ -101,48 +146,67 @@ public class PatchFeature {
           int len = sb.length();
           sb.delete(len - 4, len);
           writer.write(sb.toString());
-        } else if (line.startsWith("featuresBoot =") && !PatchUtil.isBlank(features)) {
+        } else if (line.startsWith("featuresBoot =") && patchBootFeatures) {
           String line2 = PatchUtil.readContinuedLine(reader, line);
+
           StringBuilder sb = new StringBuilder();
-          sb.append("featuresBoot = \\\n");
-
-          boolean addPhase = features.startsWith("(");
-          if (addPhase) {
-            sb.append("    ( \\\n");
-          }
-
           String value2 = line2.substring("featuresBoot =".length()).trim();
           StringTokenizer featuresTokenizer = new StringTokenizer(value2, ", \n\r");
+          
+          List<String> origFeaturesInPhase0 = new LinkedList<>();
           while (featuresTokenizer.hasMoreTokens()) {
-            sb.append("    ").append(featuresTokenizer.nextToken()).append(", \\\n");
-          }
-
-          if (addPhase) {
-            int index = features.indexOf(')');
-            String phase0Features = features.substring(1, index).trim();
-            if (!phase0Features.isEmpty()) {
-              // no additional phase 0 feature
-              features = features.substring(index + 1);
-              featuresTokenizer = new StringTokenizer(phase0Features, ", \n\r");
-              while (featuresTokenizer.hasMoreElements()) {
-                sb.append("    ").append(featuresTokenizer.nextToken()).append(", \\\n");
+            String feature = featuresTokenizer.nextToken().trim();
+            boolean add = true;
+            for (String featureToRemove : featuresToRemove) {
+              if (feature.equals(featureToRemove) || feature.startsWith(featureToRemove + "/")) {
+                add = false;
+                break;
               }
+            }
+            
+            if (add) {
+              origFeaturesInPhase0.add(feature);
             }
           }
 
-          int len = sb.length();
-          sb.delete(len - 4, len);
+          List<String> featuresInPhase0 = new LinkedList<>();
+          featuresInPhase0.addAll(origFeaturesInPhase0);
+          featuresInPhase0.addAll(featuresToAddPhase0);
+          
           if (addPhase) {
-            sb.append(")");
+            sb.append("featuresBoot = ( \\\n");
+          } else {
+            sb.append("featuresBoot = \\\n");
           }
-          sb.append(", \\\n");
 
-          featuresTokenizer = new StringTokenizer(features, ", \n\r");
-          while (featuresTokenizer.hasMoreTokens()) {
-            sb.append("    ").append(featuresTokenizer.nextToken()).append(", \\\n");
+          int n = featuresInPhase0.size();
+          for (int i = 0; i < n; i++) {
+            String feature = featuresInPhase0.get(i);
+            if (i == n - 1) {
+              sb.append("    ").append(feature);
+              if (addPhase) {
+                sb.append(")");
+              }
+              
+              if (featuresToAddPhase1.isEmpty()) {
+                sb.append("\n");
+              } else {
+                sb.append(", \\\n");
+              }
+            } else {
+              sb.append("    ").append(feature).append(", \\\n");
+            }
           }
-          len = sb.length();
-          sb.delete(len - 4, len);
+
+          n = featuresToAddPhase1.size();
+          for (int i = 0; i < n; i++) {
+            String feature = featuresToAddPhase1.get(i);
+            if (i == n - 1) {
+              sb.append("    ").append(feature);
+            } else {
+              sb.append("    ").append(feature).append(", \\\n");
+            }
+          }
           writer.write(sb.toString());
         } else {
           writer.write(line);
