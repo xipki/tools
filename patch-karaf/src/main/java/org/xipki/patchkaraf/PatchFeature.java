@@ -152,7 +152,7 @@ public class PatchFeature {
           StringBuilder sb = new StringBuilder();
           String value2 = line2.substring("featuresBoot =".length()).trim();
           StringTokenizer featuresTokenizer = new StringTokenizer(value2, ", \n\r");
-          
+
           List<String> origFeaturesInPhase0 = new LinkedList<>();
           while (featuresTokenizer.hasMoreTokens()) {
             String feature = featuresTokenizer.nextToken().trim();
@@ -163,7 +163,7 @@ public class PatchFeature {
                 break;
               }
             }
-            
+
             if (add) {
               origFeaturesInPhase0.add(feature);
             }
@@ -172,7 +172,7 @@ public class PatchFeature {
           List<String> featuresInPhase0 = new LinkedList<>();
           featuresInPhase0.addAll(origFeaturesInPhase0);
           featuresInPhase0.addAll(featuresToAddPhase0);
-          
+
           if (addPhase) {
             sb.append("featuresBoot = ( \\\n");
           } else {
@@ -187,7 +187,7 @@ public class PatchFeature {
               if (addPhase) {
                 sb.append(")");
               }
-              
+
               if (featuresToAddPhase1.isEmpty()) {
                 sb.append("\n");
               } else {
