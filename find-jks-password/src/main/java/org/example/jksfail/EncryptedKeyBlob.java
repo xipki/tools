@@ -1,12 +1,35 @@
+/*
+ *
+ * Copyright (c) 2013 - 2020 Lijun Liao
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.example.jksfail;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 
-import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
-
-public class EncryptedKeyBlob {
+/**
+ * Encrypted key entry extracted from the JKS keystore.
+ *
+ * @author Lijun Liao
+ *
+ */
+class EncryptedKeyBlob {
 
   private static final int MAGIC = 0xfeedfeed;
   private static final int VERSION_1 = 0x01;
@@ -52,24 +75,31 @@ public class EncryptedKeyBlob {
   }
 
   public static EncryptedKeyBlob fromJKS(File jksFile) throws IOException {
-    byte[] dis = Files.readAllBytes(jksFile.toPath());
-    int xMagic = readInt(dis, 0, 4);
-    int xVersion = readInt(dis, 4, 4);
+    return fromJKS(Files.readAllBytes(jksFile.toPath()));
+  }
+
+  public static EncryptedKeyBlob fromJKS(InputStream jk) throws IOException {
+    return fromJKS(readFully(jk));
+  }
+
+  public static EncryptedKeyBlob fromJKS(byte[] jksBytes) throws IOException {
+    int xMagic = readInt(jksBytes, 0, 4);
+    int xVersion = readInt(jksBytes, 4, 4);
 
     if (xMagic != MAGIC ||
         (xVersion != VERSION_1 && xVersion != VERSION_2)) {
         throw new IOException("Invalid keystore format");
     }
 
-    int count = readInt(dis, 8, 4);
+    int count = readInt(jksBytes, 8, 4);
     int off = 12;
     for (int i = 0; i < count; i++) {
-      int tag = readInt(dis, off, 4);
+      int tag = readInt(jksBytes, off, 4);
       off += 4;
 
       if (tag == 1) { // private key entry
         // skip alias
-        int utfLen = readInt(dis, off, 2);
+        int utfLen = readInt(jksBytes, off, 2);
         off += 2 + utfLen;
 
         // skip the (entry creation) date (8 bytes)
@@ -78,33 +108,33 @@ public class EncryptedKeyBlob {
         // Read the private key
         //int encryptedPrivateKeyInfoLen = bigEndianToInt(dis, off, 4);
         off += 4;
- 
+
         // Parse the EncryptedPrivateKeyInfo
-        if (0x30 != dis[off]) {
+        if (0x30 != jksBytes[off]) {
           throw new IOException("Expected EncryptedPrivateKeyInfo");
         }
         off++;
 
-        PosLen posLenEncryptedPrivateKeyInfo = readASN1PosLength(dis, off);
+        PosLen posLenEncryptedPrivateKeyInfo = readASN1PosLength(jksBytes, off);
 
         // algorithm
         off = posLenEncryptedPrivateKeyInfo.pos;
-        PosLen posLenAlgorithm = readASN1PosLength(dis, off);
+        PosLen posLenAlgorithm = readASN1PosLength(jksBytes, off);
 
         off = posLenAlgorithm.pos;
-        if (!areEqual(dis, off,
+        if (!areEqual(jksBytes, off,
             KEY_PROTECTOR_OID, 0, KEY_PROTECTOR_OID.length) ) {
           throw new IOException("Unsupported encryption algorithm");
         }
 
         // encryptedData
         off = posLenAlgorithm.pos + posLenAlgorithm.len;
-        if (0x04 != dis[off]) {
+        if (0x04 != jksBytes[off]) {
           throw new IOException("Expected OCTET STRING");
         }
         off++;
 
-        PosLen posLenData = readASN1PosLength(dis, off);
+        PosLen posLenData = readASN1PosLength(jksBytes, off);
         off = posLenData.pos;
         int len = posLenData.len;
 
@@ -113,20 +143,17 @@ public class EncryptedKeyBlob {
          * <code>protectedKey</code>)
          */
         byte[] salt = new byte[SALT_LEN];
-        System.arraycopy(dis, off, salt, 0, SALT_LEN);
-        System.out.println("salt: " + new HexBinaryAdapter().marshal(salt));
+        System.arraycopy(jksBytes, off, salt, 0, SALT_LEN);
 
-        // We just need the first block (20 bytes)
-        int encrKeyLen = Math.min(DIGEST_LEN, len - SALT_LEN - DIGEST_LEN);
+        int encrKeyLen = len - SALT_LEN - DIGEST_LEN;
 
         // Get the encrypted key portion and store it in "encrKey"
         byte[] encrKey = new byte[encrKeyLen];
-        System.arraycopy(dis, off + SALT_LEN, encrKey, 0, encrKeyLen);
-        System.out.println("encrKey: " + new HexBinaryAdapter().marshal(encrKey));
+        System.arraycopy(jksBytes, off + SALT_LEN, encrKey, 0, encrKeyLen);
         return new EncryptedKeyBlob(salt, encrKey);
       } else if (tag == 2) { // trusted certificate entry
         // skip alias
-        int utfLen = readInt(dis, off, 2);
+        int utfLen = readInt(jksBytes, off, 2);
         off += 2 + utfLen;
 
         // skip the (entry creation) date (8 bytes)
@@ -136,20 +163,38 @@ public class EncryptedKeyBlob {
         if (xVersion == 2) {
             // skip the certificate type
           // skip alias
-          utfLen = readInt(dis, off, 2);
+          utfLen = readInt(jksBytes, off, 2);
           off += 2 + utfLen;
         }
 
         // skip the certificate
-        int certLen = readInt(dis, off, 4);
+        int certLen = readInt(jksBytes, off, 4);
         off += 4 + certLen;
       } else {
         throw new IOException("Unrecognized keystore entry: " +
                 tag);
-      }          
+      }
     }
 
     return null;
+  }
+
+  static byte[] readFully(InputStream in) throws IOException {
+    try {
+      ByteArrayOutputStream bout = new ByteArrayOutputStream();
+      int readed = 0;
+      byte[] buffer = new byte[2048];
+      while ((readed = in.read(buffer)) != -1) {
+        bout.write(buffer, 0, readed);
+      }
+
+      return bout.toByteArray();
+    } finally {
+      try {
+        in.close();
+      } catch (IOException ex) {
+      }
+    }
   }
 
   private static PosLen readASN1PosLength(byte[] bytes, int offset) throws IOException {
@@ -166,7 +211,7 @@ public class EncryptedKeyBlob {
       return new PosLen(offset + 1 + lengthCount, len);
     }
   }
-  
+
   private static int readInt(byte[] bs, int off, int len)
   {
       int n = 0xff & bs[off];
@@ -176,7 +221,7 @@ public class EncryptedKeyBlob {
       }
       return n;
   }
-  
+
   private static boolean areEqual(byte[] a1, int a1Pos, byte[] a2, int a2Pos, int len) {
     if (a1Pos + len > a1.length || a2Pos + len > a2.length) {
       throw new IndexOutOfBoundsException("len is too large");
