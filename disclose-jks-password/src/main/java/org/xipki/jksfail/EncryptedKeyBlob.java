@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.example.jksfail;
+package org.xipki.jksfail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

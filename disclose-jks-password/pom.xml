@@ -24,7 +24,7 @@
     <version>7</version>
   </parent>
   <groupId>dummy</groupId>
-  <artifactId>find-jks-password</artifactId>
+  <artifactId>disclose-jks-password</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <licenses>
     <license>
@@ -60,6 +60,25 @@
           <source>1.8</source>
           <target>1.8</target>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>bin</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/assembly/descriptors/main.xml</descriptor>
+              </descriptors>
+              <appendAssemblyId>false</appendAssemblyId>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

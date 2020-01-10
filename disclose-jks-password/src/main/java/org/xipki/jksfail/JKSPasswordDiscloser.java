@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.example.jksfail;
+package org.xipki.jksfail;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,25 +30,25 @@ import java.security.NoSuchAlgorithmException;
  * @author Lijun Liao
  *
  */
-public class FindJKSPassword {
+public class JKSPasswordDiscloser {
 
-  public static char[] dictFindPassword(
+  public static char[] disclosePassword(
       PasswordIterator passwordIterator,
       File jksFile)
           throws IOException {
     byte[] jksBytes = Files.readAllBytes(jksFile.toPath());
-    return dictFindPassword(passwordIterator, jksBytes);
+    return disclosePassword(passwordIterator, jksBytes);
   }
 
-  public static char[] dictFindPassword(
+  public static char[] disclosePassword(
       PasswordIterator passwordIterator,
       InputStream jksStream)
           throws IOException {
     byte[] jksBytes = EncryptedKeyBlob.readFully(jksStream);
-    return dictFindPassword(passwordIterator, jksBytes);
+    return disclosePassword(passwordIterator, jksBytes);
   }
 
-  public static char[] dictFindPassword(
+  public static char[] disclosePassword(
       PasswordIterator passwordIterator,
       byte[] jksBytes)
           throws IOException {

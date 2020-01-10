@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-package org.example.jksfail;
+package org.xipki.jksfail;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 
 /**
@@ -37,6 +38,7 @@ public class DictPasswordIterator implements PasswordIterator {
   public DictPasswordIterator(String dictionaryFile)
       throws IOException {
     this.dictionaryFile = dictionaryFile;
+    this.reader = new BufferedReader(new FileReader(dictionaryFile));
     readNext();
   }
 

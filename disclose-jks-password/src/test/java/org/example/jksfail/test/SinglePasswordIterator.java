@@ -15,17 +15,40 @@
  * limitations under the License.
  */
 
-package org.example.jksfail;
+package org.example.jksfail.test;
 
-import java.io.Closeable;
-import java.util.Iterator;
+import java.io.IOException;
+
+import org.xipki.jksfail.PasswordIterator;
 
 /**
- * Password iterator.
- *
+ * Password iterator with only one constant password.
  * @author Lijun Liao
  *
  */
-public interface PasswordIterator extends Closeable, Iterator<char[]> {
+public class SinglePasswordIterator implements PasswordIterator {
+
+  private char[] password;
+
+  public SinglePasswordIterator(char[] password) {
+    this.password = password;
+  }
+
+  @Override
+  public void close() throws IOException {
+
+  }
+
+  @Override
+  public synchronized boolean hasNext() {
+    return password != null;
+  }
+
+  @Override
+  public synchronized char[] next() {
+    char[] current = password;
+    password = null;
+    return current;
+  }
 
 }
