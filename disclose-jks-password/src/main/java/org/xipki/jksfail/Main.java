@@ -132,7 +132,7 @@ public class Main {
     char[] password = discloser.disclosePassword();
 
     if (password != null) {
-      System.out.println(String.format("(%s) Disclosed password '%s' in %d ms",
+      System.out.println(String.format("(%s) Disclosed password '%s' in %d seconds",
           method, new String(password), (System.currentTimeMillis() - startTime) / 1000));
     }
     return password;
