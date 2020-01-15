@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.xipki.jksfail.JKSPasswordDiscloser;
+import org.xipki.jksfail.MyUtil;
 import org.xipki.jksfail.PasswordIterator;
 
 /**
@@ -88,8 +89,10 @@ public class FindPasswordBenchmark {
     public void run() {
       LoopPasswordIterator passwordIterator = new LoopPasswordIterator(password, count);
       InputStream jksStream = FindPasswordBenchmark.class.getResourceAsStream(jksFilename);
+
       try {
-        JKSPasswordDiscloser.disclosePassword(passwordIterator, jksStream);
+        byte[] jksBytes = MyUtil.readFully(jksStream);
+        JKSPasswordDiscloser.disclosePassword(passwordIterator, jksBytes);
       } catch (Exception ex) {
         throw new IllegalStateException(ex);
       }
@@ -132,5 +135,5 @@ public class FindPasswordBenchmark {
         return incorrectPassword;
       }
     }
-
+  }
 }

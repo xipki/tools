@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.xipki.jksfail.DictPasswordIterator;
 import org.xipki.jksfail.JKSPasswordDiscloser;
+import org.xipki.jksfail.MyUtil;
 import org.xipki.jksfail.PasswordIterator;
 
 /**
@@ -41,7 +42,9 @@ public class FindJKSPasswordTest {
     for (String jksFilename : jksFilenames) {
       PasswordIterator passwordIterator = new SinglePasswordIterator(password);
       InputStream jksStream = FindJKSPasswordTest.class.getResourceAsStream(jksFilename);
-      char[] passwordFound = JKSPasswordDiscloser.disclosePassword(passwordIterator, jksStream);
+      byte[] jksBytes = MyUtil.readFully(jksStream);
+
+      char[] passwordFound = JKSPasswordDiscloser.disclosePassword(passwordIterator, jksBytes);
       Assert.assertArrayEquals(jksFilename, password, passwordFound);
     }
   }
@@ -55,7 +58,8 @@ public class FindJKSPasswordTest {
       PasswordIterator passwordIterator = new DictPasswordIterator(
           "src/test/resources/examples/password-dict.txt");
       InputStream jksStream = FindJKSPasswordTest.class.getResourceAsStream(jksFilename);
-      char[] passwordFound = JKSPasswordDiscloser.disclosePassword(passwordIterator, jksStream);
+      byte[] jksBytes = MyUtil.readFully(jksStream);
+      char[] passwordFound = JKSPasswordDiscloser.disclosePassword(passwordIterator, jksBytes);
       Assert.assertArrayEquals(jksFilename, password, passwordFound);
     }
   }

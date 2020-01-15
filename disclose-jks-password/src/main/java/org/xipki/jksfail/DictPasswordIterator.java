@@ -20,64 +20,82 @@ package org.xipki.jksfail;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Dictionary based password iterator.
- *
- * @author Lijun Liao
- *
- */
-public class DictPasswordIterator implements PasswordIterator {
+   * Dictionary based password iterator.
+   *
+   * @author Lijun Liao
+   *
+   */
+  public class DictPasswordIterator implements PasswordIterator {
 
-  private final String dictionaryFile;
+    private final String dictionaryFile;
 
-  private BufferedReader reader;
+    private final AtomicBoolean cancel;
 
-  private char[] nextPassword;
+    private BufferedReader reader;
 
-  public DictPasswordIterator(String dictionaryFile)
-      throws IOException {
-    this.dictionaryFile = dictionaryFile;
-    this.reader = new BufferedReader(new FileReader(dictionaryFile));
-    readNext();
-  }
+    private char[] nextPassword;
 
-  @Override
-  public synchronized boolean hasNext() {
-    return nextPassword != null;
-  }
+    private boolean closed;
 
-  @Override
-  public synchronized char[] next() {
-    char[] current = nextPassword;
-    readNext();
-    return current;
-  }
-
-  public String getDictionaryFile() {
-    return dictionaryFile;
-  }
-
-  private void readNext() {
-    nextPassword = null;
-    String line;
-    try {
-      while ((line = reader.readLine()) != null) {
-        if (line.isEmpty()) {
-          continue;
-        }
-
-        nextPassword = line.toCharArray();
-        break;
-      }
-    } catch (IOException ex) {
-      throw new RuntimeException(ex);
+    public DictPasswordIterator(String dictionaryFile)
+        throws IOException {
+      this(dictionaryFile, null);
     }
-  }
 
-  @Override
-  public void close() throws IOException {
-    reader.close();
-  }
+    public DictPasswordIterator(String dictionaryFile, AtomicBoolean cancel)
+        throws IOException {
+      this.dictionaryFile = dictionaryFile;
+      this.reader = new BufferedReader(new FileReader(dictionaryFile));
+      this.cancel = cancel == null ? new AtomicBoolean(false) : cancel;
+      readNext();
+    }
 
-}
+    @Override
+    public synchronized boolean hasNext() {
+      return !(cancel.get() && nextPassword == null);
+    }
+
+    @Override
+    public synchronized char[] next() {
+      if (cancel.get() || nextPassword == null) {
+        return null;
+      }
+
+      char[] current = nextPassword;
+      readNext();
+      return current;
+    }
+
+    public String getDictionaryFile() {
+      return dictionaryFile;
+    }
+
+    private void readNext() {
+      nextPassword = null;
+      String line;
+      try {
+        while ((line = reader.readLine()) != null) {
+          if (line.isEmpty()) {
+            continue;
+          }
+
+          nextPassword = line.toCharArray();
+          break;
+        }
+      } catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+      if (!closed) {
+        reader.close();
+        closed = true;
+      }
+    }
+
+  }

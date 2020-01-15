@@ -17,12 +17,13 @@
 
 package org.xipki.jksfail;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Entry points to disclose the password.
@@ -32,28 +33,98 @@ import java.security.NoSuchAlgorithmException;
  */
 public class JKSPasswordDiscloser {
 
-  public static char[] disclosePassword(
-      PasswordIterator passwordIterator,
-      File jksFile)
-          throws IOException {
-    byte[] jksBytes = Files.readAllBytes(jksFile.toPath());
-    return disclosePassword(passwordIterator, jksBytes);
+  private final EncryptedKeyBlob jksEncrytedKey;
+
+  private final PasswordIterator passwordIterator;
+
+  private final AtomicBoolean passwordFound = new AtomicBoolean(false);
+
+  private char[] password;
+
+  public JKSPasswordDiscloser(byte[] jksBytes,
+      PasswordIterator passwordIterator) throws IOException {
+    this.jksEncrytedKey = EncryptedKeyBlob.fromJKS(jksBytes);
+    this.passwordIterator = passwordIterator;
+  }
+
+  private class PasswordIteratorWrapper implements PasswordIterator {
+
+    @Override
+    public void close() throws IOException {
+      passwordIterator.close();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return passwordFound.get() ? false : passwordIterator.hasNext();
+    }
+
+    @Override
+    public char[] next() {
+      return passwordFound.get() ? null : passwordIterator.next();
+    }
+
+  }
+
+  private class MyRunnable implements Runnable {
+
+    @Override
+    public void run() {
+      char[] pwd;
+      try {
+        pwd = disclosePassword(new PasswordIteratorWrapper(), jksEncrytedKey);
+      } catch (IOException ex) {
+        throw new IllegalStateException(ex);
+      }
+
+      if (pwd != null) {
+        password = pwd;
+        passwordFound.set(true);
+      }
+    }
+
+  }
+
+  public char[] disclosePassword() throws IOException {
+    final int nThreads = Runtime.getRuntime().availableProcessors();
+    if (nThreads == 1) {
+      password = disclosePassword(passwordIterator, jksEncrytedKey);
+      return password;
+    }
+
+    MyRunnable[] runnables = new MyRunnable[nThreads];
+    for (int i = 0; i < nThreads; i++) {
+      runnables[i] = new MyRunnable();
+    }
+
+    ExecutorService executor = Executors.newFixedThreadPool(nThreads);
+    for (MyRunnable m : runnables) {
+      executor.execute(m);
+    }
+
+    executor.shutdown();
+    while (true) {
+      try {
+        if (executor.awaitTermination(1, TimeUnit.MINUTES)) {
+          break;
+        }
+      } catch (InterruptedException ex) {
+      }
+    }
+
+    return password;
   }
 
   public static char[] disclosePassword(
       PasswordIterator passwordIterator,
-      InputStream jksStream)
-          throws IOException {
-    byte[] jksBytes = EncryptedKeyBlob.readFully(jksStream);
-    return disclosePassword(passwordIterator, jksBytes);
+      byte[] jksBytes) throws IOException {
+    return disclosePassword(passwordIterator, EncryptedKeyBlob.fromJKS(jksBytes));
   }
 
   public static char[] disclosePassword(
       PasswordIterator passwordIterator,
-      byte[] jksBytes)
-          throws IOException {
+      EncryptedKeyBlob blob) throws IOException {
     try {
-      EncryptedKeyBlob blob = EncryptedKeyBlob.fromJKS(jksBytes);
       final byte[] encrKey = blob.getEncrKey();
       final int encKeyLen = encrKey.length;
       final byte[] salt = blob.getSalt();
@@ -93,8 +164,8 @@ public class JKSPasswordDiscloser {
         throw new IllegalStateException(ex);
       }
 
-      while (passwordIterator.hasNext()) {
-        char[] password = passwordIterator.next();
+      char[] password;
+      while ((password = passwordIterator.next()) != null) {
         md.update(passwordToBytes(password));
         md.update(salt);
         byte[] xorKey = md.digest();

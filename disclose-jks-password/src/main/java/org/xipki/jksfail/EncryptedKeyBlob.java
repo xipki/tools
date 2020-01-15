@@ -17,11 +17,7 @@
 
 package org.xipki.jksfail;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 
 /**
  * Encrypted key entry extracted from the JKS keystore.
@@ -72,14 +68,6 @@ class EncryptedKeyBlob {
 
   public byte[] getEncrKey() {
     return encrKey;
-  }
-
-  public static EncryptedKeyBlob fromJKS(File jksFile) throws IOException {
-    return fromJKS(Files.readAllBytes(jksFile.toPath()));
-  }
-
-  public static EncryptedKeyBlob fromJKS(InputStream jk) throws IOException {
-    return fromJKS(readFully(jk));
   }
 
   public static EncryptedKeyBlob fromJKS(byte[] jksBytes) throws IOException {
@@ -177,24 +165,6 @@ class EncryptedKeyBlob {
     }
 
     return null;
-  }
-
-  static byte[] readFully(InputStream in) throws IOException {
-    try {
-      ByteArrayOutputStream bout = new ByteArrayOutputStream();
-      int readed = 0;
-      byte[] buffer = new byte[2048];
-      while ((readed = in.read(buffer)) != -1) {
-        bout.write(buffer, 0, readed);
-      }
-
-      return bout.toByteArray();
-    } finally {
-      try {
-        in.close();
-      } catch (IOException ex) {
-      }
-    }
   }
 
   private static PosLen readASN1PosLength(byte[] bytes, int offset) throws IOException {
