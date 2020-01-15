@@ -77,13 +77,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
       nextPassword = null;
       String line;
       try {
-        while ((line = reader.readLine()) != null) {
+        while (!closed && (line = reader.readLine()) != null) {
           if (line.isEmpty()) {
             continue;
+          } else {
+            nextPassword = line.toCharArray();
+            break;
           }
-
-          nextPassword = line.toCharArray();
-          break;
         }
       } catch (IOException ex) {
         throw new RuntimeException(ex);
