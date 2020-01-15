@@ -149,6 +149,8 @@ public class Main {
     buf.append("\t\tPrint this usage\n");
     buf.append("\t--dict -d\n");
     buf.append("\t\tDictionary file containing the passwords\n");
+    buf.append("\t\tExamples can be found in\n");
+    buf.append("\t\t  https://github.com/danielmiessler/SecLists/tree/master/Passwords\n");
     buf.append("\t--bf-chars -c\n");
     buf.append("\t\tFile containing the brute-force password characters\n");
     buf.append("\t--bf-minlen -l\n");
