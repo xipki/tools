@@ -44,7 +44,7 @@ public class FindPasswordBenchmark {
 
     final int count = 10 * 1000 * 1000;
 
-    final int threads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+    final int threads = Runtime.getRuntime().availableProcessors();
 
     List<MyRunnable> runnables = new ArrayList<>(threads);
     for (int i = 0; i < threads; i++) {

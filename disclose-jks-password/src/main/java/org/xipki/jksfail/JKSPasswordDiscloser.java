@@ -130,32 +130,36 @@ public class JKSPasswordDiscloser {
       final byte[] salt = blob.getSalt();
 
       // fixed the expected starting bytes
-      int[] lengthBytes;
+      byte[] lengthBytes;
       if (encKeyLen < 130) {
         int newLen = encKeyLen - 2;
-        lengthBytes = new int[1];
-        lengthBytes[0] = 0xff & newLen;
+        lengthBytes = new byte[1];
+        lengthBytes[0] = (byte) newLen;
       } else if (encKeyLen < 259) {
         int newLen = encKeyLen - 3;
-        lengthBytes = new int[2];
-        lengthBytes[0] = 0x81;
-        lengthBytes[1] = 0xff & newLen;
+        lengthBytes = new byte[2];
+        lengthBytes[0] = (byte) 0x81;
+        lengthBytes[1] = (byte) newLen;
       } else {
         int newLen = encKeyLen - 4;
-        lengthBytes = new int[3];
-        lengthBytes[0] = 0x82;
-        lengthBytes[1] = 0xff & (newLen >> 8);
-        lengthBytes[2] = 0xff & newLen;
+        lengthBytes = new byte[3];
+        lengthBytes[0] = (byte) 0x82;
+        lengthBytes[1] = (byte) (newLen >> 8);
+        lengthBytes[2] = (byte) newLen;
       }
 
-      int[] expectedStart = new int[1 + lengthBytes.length + 4];
-      expectedStart[0] = 0x30;
-      System.arraycopy(lengthBytes, 0, expectedStart, 1, lengthBytes.length);
+      byte[] expectedPlainStart = new byte[1 + lengthBytes.length + 4];
+      expectedPlainStart[0] = 0x30;
+      System.arraycopy(lengthBytes, 0, expectedPlainStart, 1, lengthBytes.length);
       System.arraycopy(
-          new int[] {2, 1, 0, 0x30}, 0,
-          expectedStart, 1 + lengthBytes.length, 4);
+          new byte[] {2, 1, 0, 0x30}, 0,
+          expectedPlainStart, 1 + lengthBytes.length, 4);
 
-      final int expectedStartLen = expectedStart.length;
+      final int expectedStartLen = expectedPlainStart.length;
+      byte[] expectedHash = new byte[expectedStartLen];
+      for (int i = 0; i < expectedStartLen; i++) {
+        expectedHash[i] = (byte) (encrKey[i] ^ expectedPlainStart[i]);
+      }
 
       MessageDigest md;
       try {
@@ -172,8 +176,7 @@ public class JKSPasswordDiscloser {
 
         boolean found = true;
         for (int i = 0; i < expectedStartLen; i++) {
-          int plain = 0xff & (xorKey[i] ^ encrKey[i]);
-          if (plain != expectedStart[i]) {
+          if (xorKey[i] != expectedHash[i]) {
             found = false;
             break;
           }
