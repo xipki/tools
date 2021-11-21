@@ -12,7 +12,14 @@ public class OpensslWrapper {
     public static final Openssl INSTANCE = init();
     
     private static Openssl init() {
-      return LibraryLoader.create(Openssl.class).load("crypto");
+      Openssl ossl = null;
+      try {
+        ossl = LibraryLoader.create(Openssl.class).load("crypto2");
+        ossl.SHA1(new byte[1], 1, new byte[20]);
+      } catch (Throwable t) {
+        ossl = null;
+      }
+      return ossl;
     }
   }
   
