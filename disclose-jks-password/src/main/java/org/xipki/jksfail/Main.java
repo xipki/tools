@@ -44,6 +44,7 @@ public class Main {
     Integer bruteforceMinLen = null;
     Integer bruteforceMaxLen = null;
     String bruteforceCharsFile= null;
+    int numThreads = 0;
 
     for (int i = 0; i < n; i += 2) {
       if (i == n - 1) {
@@ -64,6 +65,8 @@ public class Main {
         bruteforceMaxLen = Integer.parseInt(value);
       } else if ("--bf-chars".equals(opt) || "-c".equals(opt)) {
         bruteforceCharsFile = value;
+      } else if ("--thread".equals(opt) || "-t".equals(opt)) {
+        numThreads = Integer.parseInt(value);
       } else {
         System.out.println("Unknown option '" + opt + "'");
       }
@@ -74,16 +77,20 @@ public class Main {
       printUsage();
       return;
     }
+    
+    if (numThreads == 0) {
+      numThreads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+    }
 
     long start = System.currentTimeMillis();
-    System.out.println("Started at " + new Date(start));
+    System.out.println("Started at " + new Date(start) + " with " + numThreads + " threads");
 
     try {
       byte[] jksBytes = Files.readAllBytes(Paths.get(keystoreFile));
 
       if (dictionaryFile != null) {
         PasswordIterator passwordIterator = new DictPasswordIterator(dictionaryFile);
-        char[] password = disclose(jksBytes, passwordIterator, "Dictionary", start);
+        char[] password = disclose(numThreads, jksBytes, passwordIterator, "Dictionary", start);
         if (password != null) {
           return;
         }
@@ -110,7 +117,7 @@ public class Main {
         PasswordIterator passwordIterator =
             new BruteForcePasswordIterator.BruteForceRangePasswordIterator(
                 bruteforceMinLen, bruteforceMaxLen, passwordChars);
-        char[] password = disclose(jksBytes, passwordIterator, "Brute-Force", start);
+        char[] password = disclose(numThreads, jksBytes, passwordIterator, "Brute-Force", start);
         if (password != null) {
           return;
         }
@@ -126,9 +133,10 @@ public class Main {
   }
 
   private static char[] disclose(
-      byte[] jksBytes, PasswordIterator passwordIterator,
+      int numThreads, byte[] jksBytes, PasswordIterator passwordIterator,
       String method, long startTime) throws IOException {
-    JKSPasswordDiscloser discloser = new JKSPasswordDiscloser(jksBytes, passwordIterator);
+    JKSPasswordDiscloser discloser =
+        new JKSPasswordDiscloser(numThreads, jksBytes, passwordIterator);
     char[] password = discloser.disclosePassword();
 
     if (password != null) {
@@ -147,6 +155,8 @@ public class Main {
     buf.append("\t  Linux: ./run.sh [options]\n");
     buf.append("\t--help\n");
     buf.append("\t\tPrint this usage\n");
+    buf.append("\t--thread -t\n");
+    buf.append("\t\tNumber of threads. Default to half of the CPU cores.\n");
     buf.append("\t--dict -d\n");
     buf.append("\t\tDictionary file containing the passwords\n");
     buf.append("\t\tExamples can be found in\n");

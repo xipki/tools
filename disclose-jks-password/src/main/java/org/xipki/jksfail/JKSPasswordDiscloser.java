@@ -39,10 +39,13 @@ public class JKSPasswordDiscloser {
 
   private final AtomicBoolean passwordFound = new AtomicBoolean(false);
 
+  private final int nThreads;
+
   private char[] password;
 
-  public JKSPasswordDiscloser(byte[] jksBytes,
+  public JKSPasswordDiscloser(int numThreads, byte[] jksBytes,
       PasswordIterator passwordIterator) throws IOException {
+    this.nThreads = Math.max(1, numThreads);
     this.jksEncrytedKey = EncryptedKeyBlob.fromJKS(jksBytes);
     this.passwordIterator = passwordIterator;
   }
@@ -86,7 +89,6 @@ public class JKSPasswordDiscloser {
   }
 
   public char[] disclosePassword() throws IOException {
-    final int nThreads = Runtime.getRuntime().availableProcessors();
     if (nThreads == 1) {
       password = disclosePassword(passwordIterator, jksEncrytedKey);
       return password;

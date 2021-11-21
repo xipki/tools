@@ -15,20 +15,16 @@
  * limitations under the License.
  */
 
-package org.example.jksfail.test;
+package org.xipki.jksfail;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import org.xipki.jksfail.JKSPasswordDiscloser;
-import org.xipki.jksfail.MyUtil;
-import org.xipki.jksfail.PasswordIterator;
 
 /**
  * FinJKSPassword Benchmark.
@@ -37,18 +33,43 @@ import org.xipki.jksfail.PasswordIterator;
  *
  */
 public class FindPasswordBenchmark {
+  
+  private static final String PASSWORD = "1234";
+  
+  private static final String JKS = 
+        "/u3+7QAAAAIAAAABAAAAAQAEbWFpbgAAAW+OHlRpAAAA1DCB0TAOBgorBgEEASoCEQEBBQAEgb7p2y7H"
+      + "4RNy+WLJljfoTykgUIZkxXSEckgHfyRg5M4rtWMJuGjby7Qp0mOFPexmvn7U1ABJInR5pxF1zABH8CsP"
+      + "9vXqotESCvim79JR/DY9ESdexq19zOvZQ6ivKwEi/Y7UUmJ7Pa8sPBuQfaYE/akipTES/ITLInDBFd/d"
+      + "l5/ZCpWKBAYE9w9bSfP6Hhae3oLxLWCrCtTqkT3IQfVmBdMdcihcPnsee8uItCegDCou+51nr/XCxieO"
+      + "YwnBVq8xAAAAAQAFWC41MDkAAAG3MIIBszCCAVmgAwIBAgIBATAKBggqhkjOPQQDAjBAMQswCQYDVQQG"
+      + "EwJERTEOMAwGA1UECgwFeGlwa2kxCzAJBgNVBAsMAkVDMRQwEgYDVQQDDAtUTFMgRGVtbyBDQTAgFw0x"
+      + "OTA1MTAwNzI0MTdaGA8yMDU5MDUxMDA3MjQxN1owQDELMAkGA1UEBhMCREUxDjAMBgNVBAoMBXhpcGtp"
+      + "MQswCQYDVQQLDAJFQzEUMBIGA1UEAwwLVExTIERlbW8gQ0EwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNC"
+      + "AASugH43C/aArVcXc+8QF3t8EK9j7XLDjcXOIGNRhbpYfnhoQXL27ivYUKAO6DfcoRjtExiFgiF0X+1x"
+      + "p3OsQWGMo0IwQDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBRj2wt6eIyr/TsDUsiIuES+nSyQuTAO"
+      + "BgNVHQ8BAf8EBAMCAQYwCgYIKoZIzj0EAwIDSAAwRQIhAO+2xeUBHWloOWJwO1EY9dLIWFo2r0ygR4VU"
+      + "3VH0oVelAiByAkTtC0B3Qq0wLdUo4jH9a5jPMMXaeTjQOfNrkeZa3HIaWTXChw5nW/wBpDHLkTmqi8HP";
 
   public static void main(String[] args) {
-    char[] password = "1234".toCharArray();
-    String jksFilename = "/examples/keystore-ec.jks";
+    try {
+      doMain(args);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+  
+  private static void doMain(String[] args) throws Exception {
+    char[] password = PASSWORD.toCharArray();
 
     final int count = 10 * 1000 * 1000;
 
-    final int threads = Runtime.getRuntime().availableProcessors();
+    final int threads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+    
+    byte[] jksBytes = Base64.getDecoder().decode(JKS);
 
     List<MyRunnable> runnables = new ArrayList<>(threads);
     for (int i = 0; i < threads; i++) {
-      runnables.add(new MyRunnable(password, count, jksFilename));
+      runnables.add(new MyRunnable(password, count, jksBytes));
     }
 
     ExecutorService service = Executors.newFixedThreadPool(threads);
@@ -77,21 +98,19 @@ public class FindPasswordBenchmark {
 
     private char[] password;
     private int count;
-    private String jksFilename;
+    private byte[] jksBytes;
 
-    public MyRunnable(char[] password, int count, String jksFilename) {
+    public MyRunnable(char[] password, int count, byte[] jksBytes) {
       this.count = count;
       this.password = password;
-      this.jksFilename = jksFilename;
+      this.jksBytes = jksBytes;
     }
 
     @Override
     public void run() {
       LoopPasswordIterator passwordIterator = new LoopPasswordIterator(password, count);
-      InputStream jksStream = FindPasswordBenchmark.class.getResourceAsStream(jksFilename);
 
       try {
-        byte[] jksBytes = MyUtil.readFully(jksStream);
         JKSPasswordDiscloser.disclosePassword(passwordIterator, jksBytes);
       } catch (Exception ex) {
         throw new IllegalStateException(ex);
