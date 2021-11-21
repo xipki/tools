@@ -14,7 +14,7 @@ public class OpensslWrapper {
     private static Openssl init() {
       Openssl ossl = null;
       try {
-        ossl = LibraryLoader.create(Openssl.class).load("crypto2");
+        ossl = LibraryLoader.create(Openssl.class).load("crypto");
         ossl.SHA1(new byte[1], 1, new byte[20]);
       } catch (Throwable t) {
         ossl = null;
