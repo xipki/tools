@@ -59,20 +59,46 @@ public class FindPasswordBenchmark {
   }
   
   private static void doMain(String[] args) throws Exception {
+    int n = (args == null) ? 0 : args.length;
+    if (n > 0 && args[0].equals("--help")) {
+      printUsage();
+      return;
+    }
+
+    int numThreads = 0;
+
+    for (int i = 0; i < n; i += 2) {
+      if (i == n - 1) {
+        printUsage();
+        return;
+      }
+
+      String opt = args[i];
+      String value = args[i + 1];
+
+      if ("--thread".equals(opt) || "-t".equals(opt)) {
+        numThreads = Integer.parseInt(value);
+      } else {
+        System.out.println("Unknown option '" + opt + "'");
+      }
+    }
+
     char[] password = PASSWORD.toCharArray();
 
     final int count = 10 * 1000 * 1000;
 
-    final int threads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
-    
+    if (numThreads == 0) {
+      numThreads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+    }
+
     byte[] jksBytes = Base64.getDecoder().decode(JKS);
 
-    List<MyRunnable> runnables = new ArrayList<>(threads);
-    for (int i = 0; i < threads; i++) {
+    List<MyRunnable> runnables = new ArrayList<>(numThreads);
+    for (int i = 0; i < numThreads; i++) {
       runnables.add(new MyRunnable(password, count, jksBytes));
     }
 
-    ExecutorService service = Executors.newFixedThreadPool(threads);
+    ExecutorService service = Executors.newFixedThreadPool(numThreads);
 
     long start = System.currentTimeMillis();
 
@@ -89,8 +115,8 @@ public class FindPasswordBenchmark {
     } while (!service.isShutdown());
 
     long duration = System.currentTimeMillis() - start;
-    int sum = count * threads;
-    System.out.println("#threads: " + threads + ", #passwords: " + sum + ", duration: "
+    int sum = count * numThreads;
+    System.out.println("#threads: " + numThreads + ", #passwords: " + sum + ", duration: "
         + duration + " ms, speed: " + (sum * 1000L / duration) + " /s");
   }
 
@@ -155,4 +181,19 @@ public class FindPasswordBenchmark {
       }
     }
   }
+
+  private static void printUsage() {
+    StringBuilder buf = new StringBuilder();
+    buf.append("DESCRIPTION\n");
+    buf.append("\tSpeed to disclose JKS keystore password\n");
+    buf.append("SYNTAX\n");
+    buf.append("\tWindows: benchmark [options]\n");
+    buf.append("\t  Linux: ./benchmark.sh [options]\n");
+    buf.append("\t--help\n");
+    buf.append("\t\tPrint this usage\n");
+    buf.append("\t--thread -t\n");
+    buf.append("\t\tNumber of threads. Default to half of the CPU cores.\n");
+    System.out.println(buf.toString());
+  }
+
 }
