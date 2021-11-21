@@ -54,7 +54,6 @@ public class FindJKSPasswordTest {
     char[] password = "1234".toCharArray();
     String[] jksFilenames = {"/examples/keystore-ec.jks", "/examples/keystore-rsa.jks"};
     for (String jksFilename : jksFilenames) {
-      System.out.println(new java.io.File(".").getAbsolutePath());
       PasswordIterator passwordIterator = new DictPasswordIterator(
           "src/test/resources/examples/password-dict.txt");
       InputStream jksStream = FindJKSPasswordTest.class.getResourceAsStream(jksFilename);

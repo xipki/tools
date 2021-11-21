@@ -18,12 +18,12 @@
 package org.xipki.jksfail;
 
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.xipki.jksfail.dgst.Sha1Dgst;
 
 /**
  * Entry points to disclose the password.
@@ -163,18 +163,15 @@ public class JKSPasswordDiscloser {
         expectedHash[i] = (byte) (encrKey[i] ^ expectedPlainStart[i]);
       }
 
-      MessageDigest md;
-      try {
-        md = MessageDigest.getInstance("SHA1");
-      } catch (NoSuchAlgorithmException ex) {
-        throw new IllegalStateException(ex);
-      }
+      Sha1Dgst dgst = Sha1Dgst.getInstance();
 
       char[] password;
       while ((password = passwordIterator.next()) != null) {
-        md.update(passwordToBytes(password));
-        md.update(salt);
-        byte[] xorKey = md.digest();
+        byte[] pwdBytes = passwordToBytes(password);
+        byte[] bytes = new byte[pwdBytes.length + salt.length];
+        System.arraycopy(pwdBytes, 0, bytes, 0, pwdBytes.length);
+        System.arraycopy(salt, 0, bytes, pwdBytes.length, salt.length);
+        byte[] xorKey = dgst.sha1(bytes);
 
         boolean found = true;
         for (int i = 0; i < expectedStartLen; i++) {
