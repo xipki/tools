@@ -49,6 +49,7 @@
   <modules>
     <module>patch-karaf</module>
     <module>tlskeys-example</module>
+    <module>app-package</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:xipki/tools.git</connection>
