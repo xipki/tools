@@ -6,17 +6,7 @@ public class ZipFileInfo {
 
   private String path;
 
-  private long epochSecond;
-
   private List<ZipEntryInfo> entries;
-
-  public long getEpochSecond() {
-    return epochSecond;
-  }
-
-  public void setEpochSecond(long epochSecond) {
-    this.epochSecond = epochSecond;
-  }
 
   public String getPath() {
     return path;

@@ -43,11 +43,11 @@ public class PackageInfoBuilder {
     pathInfo.setPath(relativePath.toString());
 
     if (intPermission != null) {
-      pathInfo.setUnixPermissions(intPermission);
+      pathInfo.setPosixPermissions(intPermission);
     }
   }
 
-  public String addZipEntry(byte[] bytes, File targetDir) throws IOException {
+  public String addZipEntry(byte[] bytes, String name, File targetDir) throws IOException {
     String hexSha256 = MyUtil.hexSha256(bytes);
     FileInfo fileInfo = files.get(hexSha256);
 
@@ -60,6 +60,22 @@ public class PackageInfoBuilder {
 
       File newEntryFile = new File(targetDir, hexSha256);
       Files.copy(new ByteArrayInputStream(bytes), newEntryFile.toPath());
+    }
+
+    String path = "zip:" + name;
+    List<PathInfo> pathInfos = fileInfo.getPathInfos();
+    boolean contained = false;
+    for (PathInfo pathInfo : pathInfos) {
+      if (pathInfo.getPath().equals(path)) {
+        contained = true;
+        break;
+      }
+    }
+
+    if (!contained) {
+      PathInfo pathInfo = new PathInfo();
+      pathInfo.setPath("zip:" + name);
+      pathInfos.add(pathInfo);
     }
 
     return hexSha256;

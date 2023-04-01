@@ -10,7 +10,7 @@ public class PackageConf {
 
   private List<String> unpackZipFiles;
 
-  private Map<String, Integer> permissions;
+  private Map<String, Integer> posixPermissions;
 
   public List<String> getUnpackZipFiles() {
     return unpackZipFiles;
@@ -20,12 +20,12 @@ public class PackageConf {
     this.unpackZipFiles = unpackZipFiles;
   }
 
-  public Map<String, Integer> getPermissions() {
-    return permissions;
+  public Map<String, Integer> getPosixPermissions() {
+    return posixPermissions;
   }
 
-  public void setPermissions(Map<String, Integer> permissions) {
-    this.permissions = permissions;
+  public void setPosixPermissions(Map<String, Integer> posixPermissions) {
+    this.posixPermissions = posixPermissions;
   }
 
   public void init() {
@@ -39,14 +39,14 @@ public class PackageConf {
       this.unpackZipFiles = canonicalPaths;
     }
 
-    if (permissions == null) {
-      permissions = new HashMap<>(1);
+    if (posixPermissions == null) {
+      posixPermissions = new HashMap<>(1);
     } else {
-      Map<String, Integer> canonicalPaths = new HashMap<>(permissions.size());
-      for (Map.Entry<String, Integer> entry : permissions.entrySet()) {
+      Map<String, Integer> canonicalPaths = new HashMap<>(posixPermissions.size());
+      for (Map.Entry<String, Integer> entry : posixPermissions.entrySet()) {
         canonicalPaths.put(MyUtil.toUnixPath(entry.getKey()), entry.getValue());
       }
-      this.permissions = canonicalPaths;
+      this.posixPermissions = canonicalPaths;
     }
   }
 
@@ -57,7 +57,7 @@ public class PackageConf {
 
   public Integer posixPermission(Path baseDir, Path filePath) {
     String canonicalPath = MyUtil.toUnixPath(baseDir, filePath);
-    return permissions.get(canonicalPath);
+    return posixPermissions.get(canonicalPath);
   }
 
 

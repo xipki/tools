@@ -2,16 +2,16 @@ package org.xipki.apppackage;
 
 public class PathInfo {
 
-  private Integer unixPermissions;
+  private Integer posixPermissions;
 
   private String path;
 
-  public Integer getUnixPermissions() {
-    return unixPermissions;
+  public Integer getPosixPermissions() {
+    return posixPermissions;
   }
 
-  public void setUnixPermissions(Integer unixPermissions) {
-    this.unixPermissions = unixPermissions;
+  public void setPosixPermissions(Integer posixPermissions) {
+    this.posixPermissions = posixPermissions;
   }
 
   public String getPath() {

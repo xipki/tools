@@ -1,9 +1,6 @@
 package org.xipki.apppackage;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,7 +66,12 @@ public class CompressPackage {
     File[] subDirsOrFiles = srcDir.listFiles();
     for (File subDirOrFile : subDirsOrFiles) {
       if (subDirOrFile.isDirectory()) {
-        packageInfoBuilder.addFolder(baseSrcDir, subDirOrFile.toPath());
+        File[] subFolders = subDirOrFile.listFiles(pathname -> pathname.isDirectory());
+
+        if (subFolders == null || subFolders.length == 0) {
+          packageInfoBuilder.addFolder(baseSrcDir, subDirOrFile.toPath());
+        }
+
         compressDir(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
       } else {
         String fileName = subDirOrFile.getName();
@@ -105,7 +107,7 @@ public class CompressPackage {
 
     ZipFileInfo zipFileInfo = new ZipFileInfo();
     zipFileInfo.setPath(MyUtil.toUnixPath(baseSrcDir, file.toPath()));
-    zipFileInfo.setEpochSecond(Instant.now().getEpochSecond());
+    // zipFileInfo.setEpochSecond(Instant.now().getEpochSecond());
 
     List<ZipEntryInfo> zipEntryInfos = new LinkedList<>();
     zipFileInfo.setEntries(zipEntryInfos);
@@ -128,11 +130,12 @@ public class CompressPackage {
         entryBytes = bout.toByteArray();
       }
 
-      String hexSha256 = packageInfoBuilder.addZipEntry(entryBytes, targetDir);
+      String hexSha256 = packageInfoBuilder.addZipEntry(entryBytes, entry.getName(), targetDir);
       ZipEntryInfo zipEntryInfo = new ZipEntryInfo();
       zipEntryInfo.setComment(entry.getComment());
       zipEntryInfo.setName(entry.getName());
       zipEntryInfo.setSize(entryBytes.length);
+      zipEntryInfo.setEpochMilli(entry.getTime());
       zipEntryInfo.setExtra(entry.getExtra());
       zipEntryInfo.setSha256(hexSha256);
       zipEntryInfos.add(zipEntryInfo);

@@ -7,6 +7,16 @@ public class ZipEntryInfo {
   private int size;
   private String comment;
 
+  private long epochMilli;
+
+  public long getEpochMilli() {
+    return epochMilli;
+  }
+
+  public void setEpochMilli(long epochMilli) {
+    this.epochMilli = epochMilli;
+  }
+
   private byte[] extra;
 
   private String sha256;

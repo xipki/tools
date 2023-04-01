@@ -65,7 +65,6 @@ public class RestorePackage {
     List<ZipFileInfo> zipFileInfos = packageInfo.getZipFiles();
     if (zipFileInfos != null) {
       for (ZipFileInfo zipFileInfo : zipFileInfos) {
-        long epochMillis = zipFileInfo.getEpochSecond() * 1000;
         try (ZipOutputStream zipOs = new ZipOutputStream(
             new FileOutputStream(new File(targetDir, zipFileInfo.getPath())))) {
           zipOs.setMethod(ZipOutputStream.DEFLATED);
@@ -73,7 +72,7 @@ public class RestorePackage {
 
           for (ZipEntryInfo entryInfo : zipFileInfo.getEntries()) {
             ZipEntry zipEntry = new ZipEntry(entryInfo.getName());
-            zipEntry.setTime(epochMillis);
+            zipEntry.setTime(entryInfo.getEpochMilli());
             if (entryInfo.getComment() != null) {
               zipEntry.setComment(entryInfo.getComment());
             }
@@ -100,11 +99,16 @@ public class RestorePackage {
       }
 
       for (PathInfo pathInfo : fileInfo.getPathInfos()) {
+        String path = pathInfo.getPath();
+        if (path.startsWith("zip:")) {
+          continue;
+        }
+
         Path targetPath = Paths.get(targetDirPath ,pathInfo.getPath());
         Files.copy(new ByteArrayInputStream(fileValue), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-        if (MyUtil.isIsPosix() && pathInfo.getUnixPermissions() != null) {
-          Files.setPosixFilePermissions(targetPath, MyUtil.toPosixFilePermissions(pathInfo.getUnixPermissions()));
+        if (MyUtil.isIsPosix() && pathInfo.getPosixPermissions() != null) {
+          Files.setPosixFilePermissions(targetPath, MyUtil.toPosixFilePermissions(pathInfo.getPosixPermissions()));
         }
       }
     }
