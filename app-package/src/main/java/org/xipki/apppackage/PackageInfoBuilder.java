@@ -1,64 +1,60 @@
 package org.xipki.apppackage;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 public class PackageInfoBuilder {
-
-  private static final String pathSep = File.separator;
 
   private final List<String> folders = new LinkedList<>();
 
   private final Map<String, FileInfo> files = new HashMap<>();
 
   public void addFolder(Path baseSrcDir, Path folder) {
-    String path = folder.subpath(baseSrcDir.getNameCount(), folder.getNameCount()).toString();
-    if (!pathSep.equals("/")) {
-      path = path.replace(pathSep, "/");
-    }
-
-    folders.add(path);
+    folders.add(MyUtil.toUnixPath(baseSrcDir, folder));
   }
 
-  public boolean addFile(byte[] sha256, Path relativePath, Integer intPermission) {
-    String hexSha256 = bytesToHex(sha256);
+  public void addFile(byte[] bytes, Path relativePath, Integer intPermission, File targetDir) throws IOException {
+    String hexSha256 = MyUtil.hexSha256(bytes);
     FileInfo fileInfo = files.get(hexSha256);
 
-    boolean newEntry = false;
     if (fileInfo == null) {
       fileInfo = new FileInfo();
       fileInfo.setPathInfos(new LinkedList<>());
       fileInfo.setSha256(hexSha256);
       files.put(hexSha256, fileInfo);
-      newEntry = true;
+
+      File newEntryFile = new File(targetDir, hexSha256);
+      Files.copy(new ByteArrayInputStream(bytes), newEntryFile.toPath());
     }
 
     PathInfo pathInfo = new PathInfo();
     fileInfo.getPathInfos().add(pathInfo);
-
-    String path = relativePath.toString();
-    if (!pathSep.equals("/")) {
-      path = path.replace(pathSep, "/");
-    }
-    pathInfo.setPath(path);
+    pathInfo.setPath(relativePath.toString());
 
     if (intPermission != null) {
       pathInfo.setUnixPermissions(intPermission);
     }
-
-    return newEntry;
   }
 
-  private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
-  public static String bytesToHex(byte[] bytes) {
-    char[] hexChars = new char[bytes.length * 2];
-    for (int j = 0; j < bytes.length; j++) {
-      int v = bytes[j] & 0xFF;
-      hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-      hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+  public String addZipEntry(byte[] bytes, File targetDir) throws IOException {
+    String hexSha256 = MyUtil.hexSha256(bytes);
+    FileInfo fileInfo = files.get(hexSha256);
+
+    if (fileInfo == null) {
+      fileInfo = new FileInfo();
+      fileInfo.setPathInfos(new LinkedList<>());
+      fileInfo.setSha256(hexSha256);
+      files.put(hexSha256, fileInfo);
+
+      File newEntryFile = new File(targetDir, hexSha256);
+      Files.copy(new ByteArrayInputStream(bytes), newEntryFile.toPath());
     }
-    return new String(hexChars);
+
+    return hexSha256;
   }
 
   public PackageInfo build() {

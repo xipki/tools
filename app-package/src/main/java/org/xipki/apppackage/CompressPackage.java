@@ -1,40 +1,21 @@
 package org.xipki.apppackage;
 
-import java.io.*;
-import java.nio.file.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class CompressPackage {
 
-  private final boolean isPosix;
-  private final MessageDigest sha256;
-
-  private final Map<String, Integer> posixPermissions = new HashMap<>();
+  private final PackageConf conf;
 
   public CompressPackage(File confFile) {
     try {
-      sha256 = MessageDigest.getInstance("SHA-256");
-    } catch (NoSuchAlgorithmException e) {
+      conf = JSON.parseObject(confFile, PackageConf.class);
+      conf.init();
+    } catch (Exception e) {
       throw new RuntimeException(e);
-    }
-    isPosix =  FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
-
-    Properties properties = new Properties();
-    if (confFile != null) {
-      try (InputStream is = Files.newInputStream(confFile.toPath())) {
-        properties.load(is);
-        for (String key : properties.stringPropertyNames()) {
-          String value = properties.getProperty(key);
-          int intPermission = Integer.parseInt(value);
-          posixPermissions.put(Paths.get(key).toFile().getCanonicalPath(), intPermission);
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 
@@ -68,10 +49,11 @@ public class CompressPackage {
     targetDir.mkdirs();
     compressDir(builder, srcDir.toPath(), srcDir, targetDir);
     PackageInfo packageInfo = builder.build();
-    byte[] packageInfoBytes = JSON.toJSONBytes(packageInfo);
-    byte[] packageInfoSha256 = sha256.digest(packageInfoBytes);
+    byte[] packageInfoBytes = JSON.toPrettyJson(packageInfo).getBytes(StandardCharsets.UTF_8);
+    String packageInfoSha256 = MyUtil.hexSha256(packageInfoBytes);
     Files.copy(new ByteArrayInputStream(packageInfoBytes), new File(targetDir, "meta-info.json").toPath());
-    Files.copy(new ByteArrayInputStream(packageInfoSha256), new File(targetDir, "meta-info.json.sha256").toPath());
+    Files.copy(new ByteArrayInputStream(packageInfoSha256.getBytes(StandardCharsets.UTF_8)),
+        new File(targetDir, "meta-info.json.sha256").toPath());
   }
 
   private void compressDir(PackageInfoBuilder packageInfoBuilder, Path baseSrcDir,
@@ -82,6 +64,7 @@ public class CompressPackage {
         packageInfoBuilder.addFolder(baseSrcDir, subDirOrFile.toPath());
         compressDir(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
       } else {
+        String fileName = subDirOrFile.getName();
         compressFile(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
       }
     }
@@ -90,17 +73,12 @@ public class CompressPackage {
   private void compressFile(PackageInfoBuilder packageInfoBuilder, Path baseSrcDir,
                             File file, File targetDir) throws Exception {
     byte[] fileBytes = Files.readAllBytes(file.toPath());
-    byte[] sha256Value = sha256.digest(fileBytes);
 
     Path filePath = file.toPath();
-    Path relativePath = filePath.subpath(baseSrcDir.getNameCount(), filePath.getNameCount());
-    Integer posixPermission = posixPermissions.get(relativePath.toFile().getCanonicalPath());
+    Integer posixPermission = conf.posixPermission(baseSrcDir, filePath);
 
-    boolean newEntry = packageInfoBuilder.addFile(sha256Value, relativePath, posixPermission);
-    if (newEntry) {
-      File newEntryFile = new File(targetDir, PackageInfoBuilder.bytesToHex(sha256Value));
-      Files.copy(file.toPath(), newEntryFile.toPath());
-    }
+    Path relativePath = filePath.subpath(baseSrcDir.getNameCount(), filePath.getNameCount());
+    packageInfoBuilder.addFile(fileBytes, relativePath, posixPermission, targetDir);
   }
 
 }
