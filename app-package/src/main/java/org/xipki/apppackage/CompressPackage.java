@@ -1,9 +1,16 @@
 package org.xipki.apppackage;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -98,6 +105,7 @@ public class CompressPackage {
 
     ZipFileInfo zipFileInfo = new ZipFileInfo();
     zipFileInfo.setPath(MyUtil.toUnixPath(baseSrcDir, file.toPath()));
+    zipFileInfo.setEpochSecond(Instant.now().getEpochSecond());
 
     List<ZipEntryInfo> zipEntryInfos = new LinkedList<>();
     zipFileInfo.setEntries(zipEntryInfos);

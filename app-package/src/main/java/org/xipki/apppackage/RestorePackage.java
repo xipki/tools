@@ -3,9 +3,13 @@ package org.xipki.apppackage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -61,10 +65,15 @@ public class RestorePackage {
     List<ZipFileInfo> zipFileInfos = packageInfo.getZipFiles();
     if (zipFileInfos != null) {
       for (ZipFileInfo zipFileInfo : zipFileInfos) {
+        long epochMillis = zipFileInfo.getEpochSecond() * 1000;
         try (ZipOutputStream zipOs = new ZipOutputStream(
             new FileOutputStream(new File(targetDir, zipFileInfo.getPath())))) {
+          zipOs.setMethod(ZipOutputStream.DEFLATED);
+          zipOs.setLevel(Deflater.DEFAULT_COMPRESSION);
+
           for (ZipEntryInfo entryInfo : zipFileInfo.getEntries()) {
             ZipEntry zipEntry = new ZipEntry(entryInfo.getName());
+            zipEntry.setTime(epochMillis);
             if (entryInfo.getComment() != null) {
               zipEntry.setComment(entryInfo.getComment());
             }
