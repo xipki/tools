@@ -1,10 +1,11 @@
 package org.xipki.apppackage;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class CompressPackage {
 
@@ -65,7 +66,17 @@ public class CompressPackage {
         compressDir(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
       } else {
         String fileName = subDirOrFile.getName();
-        compressFile(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
+
+        boolean unpackZipFile = false;
+        if (fileName.endsWith(".war") || fileName.endsWith(".zip") || fileName.endsWith(".ear")) {
+          unpackZipFile = conf.unzipMe(baseSrcDir, subDirOrFile.toPath());
+        }
+
+        if (unpackZipFile) {
+          compressZipFile(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
+        } else {
+          compressFile(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
+        }
       }
     }
   }
@@ -79,6 +90,47 @@ public class CompressPackage {
 
     Path relativePath = filePath.subpath(baseSrcDir.getNameCount(), filePath.getNameCount());
     packageInfoBuilder.addFile(fileBytes, relativePath, posixPermission, targetDir);
+  }
+
+  private void compressZipFile(PackageInfoBuilder packageInfoBuilder, Path baseSrcDir,
+                            File file, File targetDir) throws Exception {
+    ZipFile zipFile = new ZipFile(file, ZipFile.OPEN_READ);
+
+    ZipFileInfo zipFileInfo = new ZipFileInfo();
+    zipFileInfo.setPath(MyUtil.toUnixPath(baseSrcDir, file.toPath()));
+
+    List<ZipEntryInfo> zipEntryInfos = new LinkedList<>();
+    zipFileInfo.setEntries(zipEntryInfos);
+
+    Enumeration<? extends ZipEntry> entries = zipFile.entries();
+    while (entries.hasMoreElements()) {
+      ZipEntry entry = entries.nextElement();
+      if (entry.isDirectory()) {
+        continue;
+      }
+
+      byte[] entryBytes;
+      try (InputStream entryStream = zipFile.getInputStream(entry);
+           ByteArrayOutputStream bout = new ByteArrayOutputStream(entryStream.available())) {
+        byte[] buffer = new byte[4096];
+        int readed;
+        while ((readed = entryStream.read(buffer)) != -1) {
+          bout.write(buffer, 0, readed);
+        }
+        entryBytes = bout.toByteArray();
+      }
+
+      String hexSha256 = packageInfoBuilder.addZipEntry(entryBytes, targetDir);
+      ZipEntryInfo zipEntryInfo = new ZipEntryInfo();
+      zipEntryInfo.setComment(entry.getComment());
+      zipEntryInfo.setName(entry.getName());
+      zipEntryInfo.setSize(entryBytes.length);
+      zipEntryInfo.setExtra(entry.getExtra());
+      zipEntryInfo.setSha256(hexSha256);
+      zipEntryInfos.add(zipEntryInfo);
+    }
+
+    packageInfoBuilder.addZipFile(zipFileInfo);
   }
 
 }

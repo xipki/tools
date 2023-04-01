@@ -11,10 +11,16 @@ public class PackageInfoBuilder {
 
   private final List<String> folders = new LinkedList<>();
 
+  private final List<ZipFileInfo> zipFiles = new LinkedList<>();
+
   private final Map<String, FileInfo> files = new HashMap<>();
 
   public void addFolder(Path baseSrcDir, Path folder) {
     folders.add(MyUtil.toUnixPath(baseSrcDir, folder));
+  }
+
+  public void addZipFile(ZipFileInfo zipFileInfo) {
+    zipFiles.add(zipFileInfo);
   }
 
   public void addFile(byte[] bytes, Path relativePath, Integer intPermission, File targetDir) throws IOException {
@@ -25,6 +31,7 @@ public class PackageInfoBuilder {
       fileInfo = new FileInfo();
       fileInfo.setPathInfos(new LinkedList<>());
       fileInfo.setSha256(hexSha256);
+      fileInfo.setSize(bytes.length);
       files.put(hexSha256, fileInfo);
 
       File newEntryFile = new File(targetDir, hexSha256);
@@ -48,6 +55,7 @@ public class PackageInfoBuilder {
       fileInfo = new FileInfo();
       fileInfo.setPathInfos(new LinkedList<>());
       fileInfo.setSha256(hexSha256);
+      fileInfo.setSize(bytes.length);
       files.put(hexSha256, fileInfo);
 
       File newEntryFile = new File(targetDir, hexSha256);
@@ -68,6 +76,9 @@ public class PackageInfoBuilder {
 
     packageInfo.setFiles(fileInfos);
     packageInfo.setFolders(folders);
+    if (!zipFiles.isEmpty()) {
+      packageInfo.setZipFiles(zipFiles);
+    }
     return packageInfo;
   }
 

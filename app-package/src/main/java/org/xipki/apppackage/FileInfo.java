@@ -6,6 +6,8 @@ public class FileInfo {
 
   private String sha256;
 
+  private int size;
+
   private List<PathInfo> pathInfos;
 
   public String getSha256() {
@@ -14,6 +16,14 @@ public class FileInfo {
 
   public void setSha256(String sha256) {
     this.sha256 = sha256;
+  }
+
+  public int getSize() {
+    return size;
+  }
+
+  public void setSize(int size) {
+    this.size = size;
   }
 
   public List<PathInfo> getPathInfos() {

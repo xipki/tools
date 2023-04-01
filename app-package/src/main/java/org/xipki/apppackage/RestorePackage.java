@@ -2,12 +2,12 @@ package org.xipki.apppackage;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.FileOutputStream;
+import java.nio.file.*;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class RestorePackage {
 
@@ -54,6 +54,28 @@ public class RestorePackage {
     if (folders != null) {
       for (String folder : packageInfo.getFolders()) {
         new File(targetDir, folder).mkdirs();
+      }
+    }
+
+    // restore the zip files.
+    List<ZipFileInfo> zipFileInfos = packageInfo.getZipFiles();
+    if (zipFileInfos != null) {
+      for (ZipFileInfo zipFileInfo : zipFileInfos) {
+        try (ZipOutputStream zipOs = new ZipOutputStream(
+            new FileOutputStream(new File(targetDir, zipFileInfo.getPath())))) {
+          for (ZipEntryInfo entryInfo : zipFileInfo.getEntries()) {
+            ZipEntry zipEntry = new ZipEntry(entryInfo.getName());
+            if (entryInfo.getComment() != null) {
+              zipEntry.setComment(entryInfo.getComment());
+            }
+            if (entryInfo.getExtra() != null) {
+              zipEntry.setExtra(entryInfo.getExtra());
+            }
+            zipOs.putNextEntry(zipEntry);
+
+            zipOs.write(Files.readAllBytes(new File(srcDir, entryInfo.getSha256()).toPath()));
+          }
+        }
       }
     }
 

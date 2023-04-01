@@ -6,6 +6,8 @@ public class PackageInfo {
 
   private List<String> folders;
 
+  private List<ZipFileInfo> zipFiles;
+
   private List<FileInfo> files;
 
   public List<String> getFolders() {
@@ -24,4 +26,11 @@ public class PackageInfo {
     this.files = files;
   }
 
+  public List<ZipFileInfo> getZipFiles() {
+    return zipFiles;
+  }
+
+  public void setZipFiles(List<ZipFileInfo> zipFiles) {
+    this.zipFiles = zipFiles;
+  }
 }
