@@ -7,14 +7,14 @@ public class ZipEntryInfo {
   private int size;
   private String comment;
 
-  private long epochMilli;
+  private long lastModified;
 
-  public long getEpochMilli() {
-    return epochMilli;
+  public long getLastModified() {
+    return lastModified;
   }
 
-  public void setEpochMilli(long epochMilli) {
-    this.epochMilli = epochMilli;
+  public void setLastModified(long lastModified) {
+    this.lastModified = lastModified;
   }
 
   private byte[] extra;

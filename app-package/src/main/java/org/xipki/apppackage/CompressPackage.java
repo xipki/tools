@@ -98,7 +98,7 @@ public class CompressPackage {
     Integer posixPermission = conf.posixPermission(baseSrcDir, filePath);
 
     Path relativePath = filePath.subpath(baseSrcDir.getNameCount(), filePath.getNameCount());
-    packageInfoBuilder.addFile(fileBytes, relativePath, posixPermission, targetDir);
+    packageInfoBuilder.addFile(fileBytes, file.lastModified(), relativePath, posixPermission, targetDir);
   }
 
   private void compressZipFile(PackageInfoBuilder packageInfoBuilder, Path baseSrcDir,
@@ -135,7 +135,7 @@ public class CompressPackage {
       zipEntryInfo.setComment(entry.getComment());
       zipEntryInfo.setName(entry.getName());
       zipEntryInfo.setSize(entryBytes.length);
-      zipEntryInfo.setEpochMilli(entry.getTime());
+      zipEntryInfo.setLastModified(entry.getTime() / 1000);
       zipEntryInfo.setExtra(entry.getExtra());
       zipEntryInfo.setSha256(hexSha256);
       zipEntryInfos.add(zipEntryInfo);

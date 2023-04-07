@@ -7,7 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
@@ -72,7 +74,7 @@ public class RestorePackage {
 
           for (ZipEntryInfo entryInfo : zipFileInfo.getEntries()) {
             ZipEntry zipEntry = new ZipEntry(entryInfo.getName());
-            zipEntry.setTime(entryInfo.getEpochMilli());
+            zipEntry.setTime(entryInfo.getLastModified() * 1000);
             if (entryInfo.getComment() != null) {
               zipEntry.setComment(entryInfo.getComment());
             }
@@ -104,11 +106,15 @@ public class RestorePackage {
           continue;
         }
 
-        Path targetPath = Paths.get(targetDirPath ,pathInfo.getPath());
+        Path targetPath = Paths.get(targetDirPath, path);
         Files.copy(new ByteArrayInputStream(fileValue), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
         if (MyUtil.isIsPosix() && pathInfo.getPosixPermissions() != null) {
           Files.setPosixFilePermissions(targetPath, MyUtil.toPosixFilePermissions(pathInfo.getPosixPermissions()));
+        }
+        if (pathInfo.getLastModified() != null) {
+          FileTime lastModified = FileTime.from(Instant.ofEpochSecond(pathInfo.getLastModified()));
+          Files.setLastModifiedTime(targetPath, lastModified);
         }
       }
     }

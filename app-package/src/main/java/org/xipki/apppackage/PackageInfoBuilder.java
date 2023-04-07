@@ -23,7 +23,8 @@ public class PackageInfoBuilder {
     zipFiles.add(zipFileInfo);
   }
 
-  public void addFile(byte[] bytes, Path relativePath, Integer intPermission, File targetDir) throws IOException {
+  public void addFile(byte[] bytes, long lastModified, Path relativePath,
+                      Integer intPermission, File targetDir) throws IOException {
     String hexSha256 = MyUtil.hexSha256(bytes);
     FileInfo fileInfo = files.get(hexSha256);
 
@@ -41,6 +42,7 @@ public class PackageInfoBuilder {
     PathInfo pathInfo = new PathInfo();
     fileInfo.getPathInfos().add(pathInfo);
     pathInfo.setPath(relativePath.toString());
+    pathInfo.setLastModified(lastModified / 1000);
 
     if (intPermission != null) {
       pathInfo.setPosixPermissions(intPermission);

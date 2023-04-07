@@ -6,6 +6,9 @@ public class PathInfo {
 
   private String path;
 
+  // epoch millis
+  private Long lastModified;
+
   public Integer getPosixPermissions() {
     return posixPermissions;
   }
@@ -20,5 +23,13 @@ public class PathInfo {
 
   public void setPath(String path) {
     this.path = path;
+  }
+
+  public Long getLastModified() {
+    return lastModified;
+  }
+
+  public void setLastModified(Long lastModified) {
+    this.lastModified = lastModified;
   }
 }
