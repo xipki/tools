@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.xipki.tools</groupId>
     <artifactId>tools-parent</artifactId>
-    <version>1.0.8-SNAPSHOT</version>
+    <version>1.0.8</version>
   </parent>
   <artifactId>app-package</artifactId>
   <name>XiPKI tools :: ${project.artifactId}</name>
