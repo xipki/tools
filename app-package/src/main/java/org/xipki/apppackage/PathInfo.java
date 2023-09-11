@@ -1,5 +1,10 @@
 package org.xipki.apppackage;
 
+import org.xipki.apppackage.jacob.CborDecoder;
+import org.xipki.apppackage.jacob.CborEncoder;
+
+import java.io.IOException;
+
 public class PathInfo {
 
   private Integer posixPermissions;
@@ -32,4 +37,35 @@ public class PathInfo {
   public void setLastModified(Long lastModified) {
     this.lastModified = lastModified;
   }
+
+  public void encode(CborEncoder encoder) throws IOException {
+    encoder.writeArrayStart(3);
+    encoder.writeTextString(path);
+
+    if (posixPermissions == null) {
+      encoder.writeNull();
+    } else {
+      encoder.writeInt(posixPermissions);
+    }
+
+    if (lastModified == null) {
+      encoder.writeNull();
+    } else {
+      encoder.writeInt(lastModified);
+    }
+  }
+
+  public static PathInfo decode(CborDecoder decoder) throws IOException {
+    MyUtil.readArrayStart(3, decoder);
+    PathInfo ret = new PathInfo();
+    ret.setPath(decoder.readTextString());
+    Long l = MyUtil.readLong(decoder);
+    if (l != null) {
+      ret.setPosixPermissions(l.intValue());
+    }
+    ret.setLastModified(MyUtil.readLong(decoder));
+
+    return ret;
+  }
+
 }

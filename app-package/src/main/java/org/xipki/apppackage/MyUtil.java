@@ -1,12 +1,19 @@
 package org.xipki.apppackage;
 
+import org.xipki.apppackage.jacob.CborConstants;
+import org.xipki.apppackage.jacob.CborDecoder;
+import org.xipki.apppackage.jacob.CborType;
+
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MyUtil {
@@ -100,6 +107,62 @@ public class MyUtil {
     }
 
     return filePermissions;
+  }
+
+  public static boolean isNull(CborDecoder decoder) throws IOException {
+    CborType type = decoder.peekType();
+    return type.getMajorType() == CborConstants.TYPE_FLOAT_SIMPLE && type.getAdditionalInfo() == CborConstants.NULL;
+  }
+
+  public static String readText(CborDecoder decoder) throws IOException {
+    if (MyUtil.isNull(decoder)) {
+      decoder.readNull();
+      return null;
+    } else {
+      return decoder.readTextString();
+    }
+  }
+
+  public static Long readLong(CborDecoder decoder) throws IOException {
+    if (MyUtil.isNull(decoder)) {
+      decoder.readNull();
+      return null;
+    } else {
+      return decoder.readInt();
+    }
+  }
+
+  public static byte[] readByteString(CborDecoder decoder) throws IOException {
+    if (MyUtil.isNull(decoder)) {
+      decoder.readNull();
+      return null;
+    } else {
+      return decoder.readByteString();
+    }
+  }
+
+
+  public static List<String> readTextList(CborDecoder decoder) throws IOException {
+    if (MyUtil.isNull(decoder)) {
+      decoder.readNull();
+      return null;
+    } else {
+      int size = (int) decoder.readArrayLength();
+      List<String> list = new ArrayList<>(size);
+      for (int i = 0; i < size; i++) {
+        list.add(decoder.readTextString());
+      }
+      return list;
+    }
+  }
+
+  public static int readArrayStart(int expectedArrayLen, CborDecoder decoder) throws IOException {
+    int arrayLen = (int) decoder.readArrayLength();
+    if (arrayLen != expectedArrayLen) {
+      throw new IOException("array.length is " + arrayLen +
+          " but expected " + expectedArrayLen);
+    }
+    return arrayLen;
   }
 
 }

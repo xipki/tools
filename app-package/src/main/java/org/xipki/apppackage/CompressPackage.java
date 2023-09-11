@@ -4,10 +4,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.util.Enumeration;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -17,8 +14,7 @@ public class CompressPackage {
 
   public CompressPackage(File confFile) {
     try {
-      conf = JSON.parseObject(confFile, PackageConf.class);
-      conf.init();
+      conf = new PackageConf(confFile);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -54,11 +50,11 @@ public class CompressPackage {
     targetDir.mkdirs();
     compressDir(builder, srcDir.toPath(), srcDir, targetDir);
     PackageInfo packageInfo = builder.build();
-    byte[] packageInfoBytes = JSON.toPrettyJson(packageInfo).getBytes(StandardCharsets.UTF_8);
+    byte[] packageInfoBytes = packageInfo.encode();
     String packageInfoSha256 = MyUtil.hexSha256(packageInfoBytes);
-    Files.copy(new ByteArrayInputStream(packageInfoBytes), new File(targetDir, "meta-info.json").toPath());
+    Files.copy(new ByteArrayInputStream(packageInfoBytes), new File(targetDir, "meta-info.cbor").toPath());
     Files.copy(new ByteArrayInputStream(packageInfoSha256.getBytes(StandardCharsets.UTF_8)),
-        new File(targetDir, "meta-info.json.sha256").toPath());
+        new File(targetDir, "meta-info.cbor.sha256").toPath());
   }
 
   private void compressDir(PackageInfoBuilder packageInfoBuilder, Path baseSrcDir,

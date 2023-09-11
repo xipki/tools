@@ -1,10 +1,11 @@
 package org.xipki.apppackage;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PackageConf {
 
@@ -28,25 +29,33 @@ public class PackageConf {
     this.posixPermissions = posixPermissions;
   }
 
-  public void init() {
-    if (unpackZipFiles == null) {
-      unpackZipFiles = new ArrayList<>(1);
-    } else {
-      List<String> canonicalPaths = new ArrayList<>(unpackZipFiles.size());
-      for (String path : unpackZipFiles) {
-        canonicalPaths.add(MyUtil.toUnixPath(path));
-      }
-      this.unpackZipFiles = canonicalPaths;
+  public PackageConf(File confFile) throws IOException  {
+    Properties props = new Properties();
+    try (Reader reader = new FileReader(confFile)) {
+      props.load(reader);
     }
 
-    if (posixPermissions == null) {
+    String value = props.getProperty("unpackZipFiles");
+    if (value == null) {
+      this.unpackZipFiles = new ArrayList<>(1);
+    } else {
+      String[] _unpackZipFiles = value.split(", ");
+      this.unpackZipFiles = new ArrayList<>(_unpackZipFiles.length);
+      for (String path : _unpackZipFiles) {
+        this.unpackZipFiles.add(MyUtil.toUnixPath(path));
+      }
+    }
+
+    value = props.getProperty("posixPermissions");
+    if (value == null) {
       posixPermissions = new HashMap<>(1);
     } else {
-      Map<String, Integer> canonicalPaths = new HashMap<>(posixPermissions.size());
-      for (Map.Entry<String, Integer> entry : posixPermissions.entrySet()) {
-        canonicalPaths.put(MyUtil.toUnixPath(entry.getKey()), entry.getValue());
+      String[] _posixPermissions = value.split(", ");
+      this.posixPermissions = new HashMap<>(_posixPermissions.length);
+      for (String permission : _posixPermissions) {
+        String[] tokens = permission.split(":");
+        this.posixPermissions.put(MyUtil.toUnixPath(tokens[0]), Integer.parseInt(tokens[1]));
       }
-      this.posixPermissions = canonicalPaths;
     }
   }
 

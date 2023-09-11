@@ -45,15 +45,15 @@ public class RestorePackage {
       throw new IllegalArgumentException("targetDir must not be under srcDir");
     }
 
-    byte[] packageInfoBytes = Files.readAllBytes(Paths.get(srcDir.toString(), "meta-info.json"));
+    byte[] packageInfoBytes = Files.readAllBytes(Paths.get(srcDir.toString(), "meta-info.cbor"));
     String expectedPackageInfoSha256 = new String(
-        Files.readAllBytes(Paths.get(srcDir.toString(), "meta-info.json.sha256"))).trim();
+        Files.readAllBytes(Paths.get(srcDir.toString(), "meta-info.cbor.sha256"))).trim();
     String packageInfoSha256 = MyUtil.hexSha256(packageInfoBytes);
     if (!expectedPackageInfoSha256.equals(packageInfoSha256)) {
-      throw new GeneralSecurityException("meta-info.json and meta-info.json.sha256 do not match");
+      throw new GeneralSecurityException("meta-info.cbor and meta-info.cbor.sha256 do not match");
     }
 
-    PackageInfo packageInfo = JSON.parseObject(packageInfoBytes, PackageInfo.class);
+    PackageInfo packageInfo = PackageInfo.decode(packageInfoBytes);
     targetDir.mkdirs();
     // restore the folders.
     List<String> folders = packageInfo.getFolders();
@@ -68,7 +68,7 @@ public class RestorePackage {
     if (zipFileInfos != null) {
       for (ZipFileInfo zipFileInfo : zipFileInfos) {
         try (ZipOutputStream zipOs = new ZipOutputStream(
-            new FileOutputStream(new File(targetDir, zipFileInfo.getPath())))) {
+            Files.newOutputStream(new File(targetDir, zipFileInfo.getPath()).toPath()))) {
           zipOs.setMethod(ZipOutputStream.DEFLATED);
           zipOs.setLevel(Deflater.DEFAULT_COMPRESSION);
 
