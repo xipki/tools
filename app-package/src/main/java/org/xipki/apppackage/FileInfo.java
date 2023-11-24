@@ -1,7 +1,7 @@
 package org.xipki.apppackage;
 
-import org.xipki.apppackage.jacob.CborDecoder;
-import org.xipki.apppackage.jacob.CborEncoder;
+import org.xipki.apppackage.cbor.CborDecoder;
+import org.xipki.apppackage.cbor.CborEncoder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,18 +9,18 @@ import java.util.List;
 
 public class FileInfo {
 
-  private String sha256;
+  private String fileName;
 
   private int size;
 
   private List<PathInfo> pathInfos;
 
-  public String getSha256() {
-    return sha256;
+  public String getFileName() {
+    return fileName;
   }
 
-  public void setSha256(String sha256) {
-    this.sha256 = sha256;
+  public void setFileName(String fileName) {
+    this.fileName = fileName;
   }
 
   public int getSize() {
@@ -41,7 +41,7 @@ public class FileInfo {
 
   public void encode(CborEncoder encoder) throws IOException {
     encoder.writeArrayStart(3);
-    encoder.writeTextString(sha256);
+    encoder.writeTextString(fileName);
     encoder.writeInt(size);
     if (pathInfos == null) {
       encoder.writeNull();
@@ -57,7 +57,7 @@ public class FileInfo {
     MyUtil.readArrayStart(3, decoder);
 
     FileInfo ret = new FileInfo();
-    ret.setSha256(decoder.readTextString());
+    ret.setFileName(decoder.readTextString());
     ret.setSize((int) decoder.readInt());
 
     List<PathInfo> pathInfos;

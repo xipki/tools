@@ -1,7 +1,7 @@
 package org.xipki.apppackage;
 
-import org.xipki.apppackage.jacob.CborDecoder;
-import org.xipki.apppackage.jacob.CborEncoder;
+import org.xipki.apppackage.cbor.CborDecoder;
+import org.xipki.apppackage.cbor.CborEncoder;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -3,7 +3,7 @@
  * 
  * (C) Copyright - 2013 - J.W. Janssen <j.w.janssen@lxtreme.nl>
  */
-package org.xipki.apppackage.jacob;
+package org.xipki.apppackage.cbor;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -30,11 +30,6 @@ public class CborDecoder {
 
     private static void fail(String msg, Object... args) throws IOException {
         throw new IOException(String.format(msg, args));
-    }
-
-    private static String lengthToString(int len) {
-        return (len < 0) ? "no payload" : (len == CborConstants.ONE_BYTE) ? "one byte" : (len == CborConstants.TWO_BYTES) ? "two bytes"
-            : (len == CborConstants.FOUR_BYTES) ? "four bytes" : (len == CborConstants.EIGHT_BYTES) ? "eight bytes" : "(unknown)";
     }
 
     /**
@@ -78,20 +73,8 @@ public class CborDecoder {
     }
 
     /**
-     * Reads a "break"/stop value in CBOR format.
-     * 
-     * @return always <code>null</code>.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public Object readBreak() throws IOException {
-        readMajorTypeExact(CborConstants.TYPE_FLOAT_SIMPLE, CborConstants.BREAK);
-
-        return null;
-    }
-
-    /**
      * Reads a byte string value in CBOR format.
-     * 
+     *
      * @return the read byte string, never <code>null</code>. In case the encoded string has a length of <tt>0</tt>, an empty string is returned.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
@@ -104,67 +87,6 @@ public class CborDecoder {
             fail("String length too long!");
         }
         return readFully(new byte[(int) len]);
-    }
-
-    /**
-     * Prolog to reading a byte string value in CBOR format.
-     * 
-     * @return the number of bytes in the string to read, or <tt>-1</tt> in case of infinite-length strings.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public long readByteStringLength() throws IOException {
-        return readMajorTypeWithSize(CborConstants.TYPE_BYTE_STRING);
-    }
-
-    /**
-     * Reads a double-precision float value in CBOR format.
-     * 
-     * @return the read double value, values from {@link Float#MIN_VALUE} to {@link Float#MAX_VALUE} are supported.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public double readDouble() throws IOException {
-        readMajorTypeExact(CborConstants.TYPE_FLOAT_SIMPLE, CborConstants.DOUBLE_PRECISION_FLOAT);
-
-        return Double.longBitsToDouble(readUInt64());
-    }
-
-    /**
-     * Reads a single-precision float value in CBOR format.
-     * 
-     * @return the read float value, values from {@link Float#MIN_VALUE} to {@link Float#MAX_VALUE} are supported.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public float readFloat() throws IOException {
-        readMajorTypeExact(CborConstants.TYPE_FLOAT_SIMPLE, CborConstants.SINGLE_PRECISION_FLOAT);
-
-        return Float.intBitsToFloat((int) readUInt32());
-    }
-
-    /**
-     * Reads a half-precision float value in CBOR format.
-     * 
-     * @return the read half-precision float value, values from {@link Float#MIN_VALUE} to {@link Float#MAX_VALUE} are supported.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public double readHalfPrecisionFloat() throws IOException {
-        readMajorTypeExact(CborConstants.TYPE_FLOAT_SIMPLE, CborConstants.HALF_PRECISION_FLOAT);
-
-        int half = readUInt16();
-        int exp = (half >> 10) & 0x1f;
-        int mant = half & 0x3ff;
-
-        double val;
-        if (exp == 0) {
-            val = mant * Math.pow(2, -24);
-        } else if (exp != 31) {
-            val = (mant + 1024) * Math.pow(2, exp - 25);
-        } else if (mant != 0) {
-            val = Double.NaN;
-        } else {
-            val = Double.POSITIVE_INFINITY;
-        }
-
-        return ((half & 0x8000) == 0) ? val : -val;
     }
 
     /**
@@ -183,76 +105,6 @@ public class CborDecoder {
     }
 
     /**
-     * Reads a signed or unsigned 16-bit integer value in CBOR format.
-     * 
-     * @read the small integer value, values from <tt>[-65536..65535]</tt> are supported.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying output stream.
-     */
-    public int readInt16() throws IOException {
-        int ib = m_is.read();
-
-        // in case of negative integers, extends the sign to all bits; otherwise zero...
-        long ui = expectIntegerType(ib);
-        // in case of negative integers does a ones complement
-        return (int) (ui ^ readUIntExact(CborConstants.TWO_BYTES, ib & 0x1f));
-    }
-
-    /**
-     * Reads a signed or unsigned 32-bit integer value in CBOR format.
-     * 
-     * @read the small integer value, values in the range <tt>[-4294967296..4294967295]</tt> are supported.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying output stream.
-     */
-    public long readInt32() throws IOException {
-        int ib = m_is.read();
-
-        // in case of negative integers, extends the sign to all bits; otherwise zero...
-        long ui = expectIntegerType(ib);
-        // in case of negative integers does a ones complement
-        return ui ^ readUIntExact(CborConstants.FOUR_BYTES, ib & 0x1f);
-    }
-
-    /**
-     * Reads a signed or unsigned 64-bit integer value in CBOR format.
-     * 
-     * @read the small integer value, values from {@link Long#MIN_VALUE} to {@link Long#MAX_VALUE} are supported.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying output stream.
-     */
-    public long readInt64() throws IOException {
-        int ib = m_is.read();
-
-        // in case of negative integers, extends the sign to all bits; otherwise zero...
-        long ui = expectIntegerType(ib);
-        // in case of negative integers does a ones complement
-        return ui ^ readUIntExact(CborConstants.EIGHT_BYTES, ib & 0x1f);
-    }
-
-    /**
-     * Reads a signed or unsigned 8-bit integer value in CBOR format.
-     * 
-     * @read the small integer value, values in the range <tt>[-256..255]</tt> are supported.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying output stream.
-     */
-    public int readInt8() throws IOException {
-        int ib = m_is.read();
-
-        // in case of negative integers, extends the sign to all bits; otherwise zero...
-        long ui = expectIntegerType(ib);
-        // in case of negative integers does a ones complement
-        return (int) (ui ^ readUIntExact(CborConstants.ONE_BYTE, ib & 0x1f));
-    }
-
-    /**
-     * Prolog to reading a map of key-value pairs in CBOR format.
-     * 
-     * @return the number of entries in the map, >= 0.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public long readMapLength() throws IOException {
-        return readMajorTypeWithSize(CborConstants.TYPE_MAP);
-    }
-
-    /**
      * Reads a <code>null</code>-value in CBOR format.
      * 
      * @return always <code>null</code>.
@@ -261,42 +113,6 @@ public class CborDecoder {
     public Object readNull() throws IOException {
         readMajorTypeExact(CborConstants.TYPE_FLOAT_SIMPLE, CborConstants.NULL);
         return null;
-    }
-
-    /**
-     * Reads a single byte value in CBOR format.
-     * 
-     * @return the read byte value.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public byte readSimpleValue() throws IOException {
-        readMajorTypeExact(CborConstants.TYPE_FLOAT_SIMPLE, CborConstants.ONE_BYTE);
-        return (byte) readUInt8();
-    }
-
-    /**
-     * Reads a signed or unsigned small (&lt;= 23) integer value in CBOR format.
-     * 
-     * @read the small integer value, values in the range <tt>[-24..23]</tt> are supported.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying output stream.
-     */
-    public int readSmallInt() throws IOException {
-        int ib = m_is.read();
-
-        // in case of negative integers, extends the sign to all bits; otherwise zero...
-        long ui = expectIntegerType(ib);
-        // in case of negative integers does a ones complement
-        return (int) (ui ^ readUIntExact(-1, ib & 0x1f));
-    }
-
-    /**
-     * Reads a semantic tag value in CBOR format.
-     * 
-     * @return the read tag value.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public long readTag() throws IOException {
-        return readUInt(readMajorType(CborConstants.TYPE_TAG), false /* breakAllowed */);
     }
 
     /**
@@ -317,30 +133,9 @@ public class CborDecoder {
     }
 
     /**
-     * Prolog to reading an UTF-8 encoded string value in CBOR format.
-     * 
-     * @return the length of the string to read, or <tt>-1</tt> in case of infinite-length strings.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public long readTextStringLength() throws IOException {
-        return readMajorTypeWithSize(CborConstants.TYPE_TEXT_STRING);
-    }
-
-    /**
-     * Reads an undefined value in CBOR format.
-     * 
-     * @return always <code>null</code>.
-     * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
-     */
-    public Object readUndefined() throws IOException {
-        readMajorTypeExact(CborConstants.TYPE_FLOAT_SIMPLE, CborConstants.UNDEFINED);
-        return null;
-    }
-
-    /**
      * Reads the next major type from the underlying input stream, and verifies whether it matches the given expectation.
      * 
-     * @param majorType the expected major type, cannot be <code>null</code> (unchecked).
+     * @param ib the expected major type, cannot be <code>null</code> (unchecked).
      * @return either <tt>-1</tt> if the major type was an signed integer, or <tt>0</tt> otherwise.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
@@ -463,21 +258,6 @@ public class CborDecoder {
      */
     protected int readUInt8() throws IOException {
         return m_is.read() & 0xff;
-    }
-
-    /**
-     * Reads an unsigned integer with a given length-indicator.
-     * 
-     * @param length the length indicator to use;
-     * @return the read unsigned integer, as long value.
-     * @throws IOException in case of I/O problems reading the unsigned integer from the underlying input stream.
-     */
-    protected long readUIntExact(int expectedLength, int length) throws IOException {
-        if (((expectedLength == -1) && (length >= CborConstants.ONE_BYTE)) || ((expectedLength >= 0) && (length != expectedLength))) {
-            fail("Unexpected payload/length! Expected %s, but got %s.", lengthToString(expectedLength),
-                lengthToString(length));
-        }
-        return readUInt(length, false /* breakAllowed */);
     }
 
     private byte[] readFully(byte[] buf) throws IOException {

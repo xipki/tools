@@ -5,7 +5,7 @@
  *
  * Licensed under Apache License v2.0.
  */
-package org.xipki.apppackage.jacob;
+package org.xipki.apppackage.cbor;
 
 /**
  * Represents the various major types in CBOR, along with their .
@@ -96,39 +96,6 @@ public class CborType {
         result = prime * result + m_additional;
         result = prime * result + m_major;
         return result;
-    }
-
-    /**
-     * @return <code>true</code> if this type allows for an infinite-length payload,
-     *         <code>false</code> if only definite-length payloads are allowed.
-     */
-    public boolean isBreakAllowed() {
-        return m_major == CborConstants.TYPE_ARRAY || m_major == CborConstants.TYPE_BYTE_STRING || m_major == CborConstants.TYPE_MAP
-            || m_major == CborConstants.TYPE_TEXT_STRING;
-    }
-
-    /**
-     * Determines whether the major type of a given {@link CborType} equals the major type of this {@link CborType}.
-     * 
-     * @param other the {@link CborType} to compare against, cannot be <code>null</code>.
-     * @return <code>true</code> if the given {@link CborType} is of the same major type as this {@link CborType}, <code>false</code> otherwise.
-     * @throws IllegalArgumentException in case the given argument was <code>null</code>.
-     */
-    public boolean isEqualType(CborType other) {
-        if (other == null) {
-            throw new IllegalArgumentException("Parameter cannot be null!");
-        }
-        return m_major == other.m_major;
-    }
-
-    /**
-     * Determines whether the major type of a given byte value (representing an encoded {@link CborType}) equals the major type of this {@link CborType}.
-     * 
-     * @param encoded the encoded CBOR type to compare.
-     * @return <code>true</code> if the given byte value represents the same major type as this {@link CborType}, <code>false</code> otherwise.
-     */
-    public boolean isEqualType(int encoded) {
-        return m_major == ((encoded & 0xff) >>> 5);
     }
 
     @Override

@@ -46,7 +46,7 @@ public class CompressPackage {
       throw new IllegalArgumentException("targetDir already exists");
     }
 
-    PackageInfoBuilder builder = new PackageInfoBuilder();
+    PackageInfoBuilder builder = new PackageInfoBuilder(conf);
     targetDir.mkdirs();
     compressDir(builder, srcDir.toPath(), srcDir, targetDir);
     PackageInfo packageInfo = builder.build();
@@ -70,13 +70,7 @@ public class CompressPackage {
 
         compressDir(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
       } else {
-        String fileName = subDirOrFile.getName();
-
-        boolean unpackZipFile = false;
-        if (fileName.endsWith(".war") || fileName.endsWith(".zip") || fileName.endsWith(".ear")) {
-          unpackZipFile = conf.unzipMe(baseSrcDir, subDirOrFile.toPath());
-        }
-
+        boolean unpackZipFile = conf.unzipMe(baseSrcDir, subDirOrFile.toPath());
         if (unpackZipFile) {
           compressZipFile(packageInfoBuilder, baseSrcDir, subDirOrFile, targetDir);
         } else {
@@ -126,14 +120,14 @@ public class CompressPackage {
         entryBytes = bout.toByteArray();
       }
 
-      String hexSha256 = packageInfoBuilder.addZipEntry(entryBytes, entry.getName(), targetDir);
+      String fileName = packageInfoBuilder.addZipEntry(entryBytes, entry.getName(), targetDir);
       ZipEntryInfo zipEntryInfo = new ZipEntryInfo();
       zipEntryInfo.setComment(entry.getComment());
       zipEntryInfo.setName(entry.getName());
       zipEntryInfo.setSize(entryBytes.length);
       zipEntryInfo.setLastModified(entry.getTime() / 1000);
       zipEntryInfo.setExtra(entry.getExtra());
-      zipEntryInfo.setSha256(hexSha256);
+      zipEntryInfo.setFileName(fileName);
       zipEntryInfos.add(zipEntryInfo);
     }
 

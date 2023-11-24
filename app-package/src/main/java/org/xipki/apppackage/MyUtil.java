@@ -1,8 +1,8 @@
 package org.xipki.apppackage;
 
-import org.xipki.apppackage.jacob.CborConstants;
-import org.xipki.apppackage.jacob.CborDecoder;
-import org.xipki.apppackage.jacob.CborType;
+import org.xipki.apppackage.cbor.CborConstants;
+import org.xipki.apppackage.cbor.CborDecoder;
+import org.xipki.apppackage.cbor.CborType;
 
 import java.io.File;
 import java.io.IOException;

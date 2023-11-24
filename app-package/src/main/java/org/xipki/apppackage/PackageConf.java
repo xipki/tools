@@ -1,33 +1,25 @@
 package org.xipki.apppackage;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class PackageConf {
 
-  private List<String> unpackZipFiles;
+  enum SuffixMode {
+    NONE,
+    EXTENSION,
+    FILENAME
+  }
+
+  private SuffixMode suffixMode;
+
+  private Set<String> zipExtensions;
+
+  private Set<String> unpackZipFiles;
 
   private Map<String, Integer> posixPermissions;
-
-  public List<String> getUnpackZipFiles() {
-    return unpackZipFiles;
-  }
-
-  public void setUnpackZipFiles(List<String> unpackZipFiles) {
-    this.unpackZipFiles = unpackZipFiles;
-  }
-
-  public Map<String, Integer> getPosixPermissions() {
-    return posixPermissions;
-  }
-
-  public void setPosixPermissions(Map<String, Integer> posixPermissions) {
-    this.posixPermissions = posixPermissions;
-  }
 
   public PackageConf(File confFile) throws IOException  {
     Properties props = new Properties();
@@ -35,23 +27,28 @@ public class PackageConf {
       props.load(reader);
     }
 
-    String value = props.getProperty("unpackZipFiles");
+    String value = props.getProperty("suffixMode");
+    suffixMode = (value == null || value.isEmpty()) ? SuffixMode.FILENAME : SuffixMode.valueOf(value);
+
+    value = props.getProperty("zipExtensions");
     if (value == null) {
-      this.unpackZipFiles = new ArrayList<>(1);
-    } else {
-      String[] _unpackZipFiles = value.split(", ");
-      this.unpackZipFiles = new ArrayList<>(_unpackZipFiles.length);
-      for (String path : _unpackZipFiles) {
+      value = "war,zip,ear";
+    }
+    this.zipExtensions = splitStr(value);
+
+    value = props.getProperty("unpackZipFiles");
+    this.unpackZipFiles = new HashSet<>();
+    if (value != null) {
+      Set<String> tokens = splitStr(value);
+      for (String path : tokens) {
         this.unpackZipFiles.add(MyUtil.toUnixPath(path));
       }
     }
 
     value = props.getProperty("posixPermissions");
-    if (value == null) {
-      posixPermissions = new HashMap<>(1);
-    } else {
-      String[] _posixPermissions = value.split(", ");
-      this.posixPermissions = new HashMap<>(_posixPermissions.length);
+    this.posixPermissions = new HashMap<>();
+    if (value != null) {
+      Set<String> _posixPermissions = splitStr(value);
       for (String permission : _posixPermissions) {
         String[] tokens = permission.split(":");
         this.posixPermissions.put(MyUtil.toUnixPath(tokens[0]), Integer.parseInt(tokens[1]));
@@ -59,15 +56,75 @@ public class PackageConf {
     }
   }
 
+  public String getSuffix(Path path) {
+    switch (suffixMode) {
+      case NONE:
+        return "";
+      case FILENAME:
+        return "." + path.getFileName().toString();
+      default: // Extension
+        String extension = getExtension(path.getFileName().toString());
+        return extension == null || extension.isEmpty() ? "" : "." + extension;
+    }
+  }
+
   public boolean unzipMe(Path baseDir, Path zipFilePath) {
-    String canonicalPath = MyUtil.toUnixPath(baseDir, zipFilePath);
-    return unpackZipFiles.contains(canonicalPath);
+    String extension = getExtension(zipFilePath.getFileName().toString());
+    if (!this.zipExtensions.contains(extension)) {
+      return false;
+    }
+    return null != getMatchElement(baseDir, zipFilePath, extension, unpackZipFiles);
   }
 
   public Integer posixPermission(Path baseDir, Path filePath) {
-    String canonicalPath = MyUtil.toUnixPath(baseDir, filePath);
-    return posixPermissions.get(canonicalPath);
+    String str = getMatchElement(baseDir, filePath, getExtension(filePath.getFileName().toString()),
+        posixPermissions.keySet());
+    return str == null ? null : posixPermissions.get(str);
   }
 
+  private static String getMatchElement(Path baseDir, Path filePath, String extension, Collection<String> coll) {
+    String canonicalPath = MyUtil.toUnixPath(baseDir, filePath);
+    // full pah mach
+    if (coll.contains(canonicalPath)) {
+      return canonicalPath;
+    }
+
+    Path p = Paths.get(canonicalPath);
+    if (extension != null) {
+      String a = p.getParent() + "/*";
+      String str = a + "." + extension;
+      if (coll.contains(str)) {
+        return str;
+      }
+
+      if (coll.contains(a)) {
+        return a;
+      }
+
+      str = "*." + extension;
+      if (coll.contains(str)) {
+        return str;
+      }
+    }
+
+    return null;
+  }
+
+  static String getExtension(String fileName) {
+    int dotIndex = fileName.lastIndexOf('.');
+    if (dotIndex != -1 && dotIndex != fileName.length() - 1) {
+      return fileName.substring(dotIndex + 1);
+    }
+    return null;
+  }
+
+  private static Set<String> splitStr(String text) {
+    StringTokenizer tokenizer = new StringTokenizer(text, ", \t");
+    Set<String> ret = new HashSet<>(tokenizer.countTokens() * 3 / 2);
+    while (tokenizer.hasMoreTokens()) {
+      ret.add(tokenizer.nextToken());
+    }
+    return ret;
+  }
 
 }

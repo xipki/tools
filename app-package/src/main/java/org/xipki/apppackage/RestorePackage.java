@@ -2,7 +2,7 @@ package org.xipki.apppackage;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -83,7 +83,15 @@ public class RestorePackage {
             }
             zipOs.putNextEntry(zipEntry);
 
-            zipOs.write(Files.readAllBytes(new File(srcDir, entryInfo.getSha256()).toPath()));
+            System.out.println("filename: " + entryInfo.getFileName());
+            Path p0 = new File(srcDir, entryInfo.getFileName()).toPath();
+            try {
+              zipOs.write(Files.readAllBytes(p0));
+            } catch (Exception e) {
+              System.out.println(p0);
+              e.printStackTrace();
+              throw e;
+            }
           }
         }
       }
@@ -93,10 +101,11 @@ public class RestorePackage {
     String targetDirPath = targetDir.getCanonicalPath();
 
     for (FileInfo fileInfo : packageInfo.getFiles()) {
-      Path valueFilePath = Paths.get(srcDirPath, fileInfo.getSha256());
+      Path valueFilePath = Paths.get(srcDirPath, fileInfo.getFileName());
       byte[] fileValue = Files.readAllBytes(valueFilePath);
       String fileValueSha256 = MyUtil.hexSha256(fileValue);
-      if (!fileInfo.getSha256().equals(fileValueSha256)) {
+
+      if (!fileInfo.getFileName().startsWith(fileValueSha256)) {
         throw new GeneralSecurityException("File " + valueFilePath.toFile() + " has been manipulated.");
       }
 

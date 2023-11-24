@@ -5,15 +5,22 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class PackageInfoBuilder {
+
+  private final PackageConf conf;
 
   private final List<String> folders = new LinkedList<>();
 
   private final List<ZipFileInfo> zipFiles = new LinkedList<>();
 
   private final Map<String, FileInfo> files = new HashMap<>();
+
+  public PackageInfoBuilder(PackageConf conf) {
+    this.conf = Objects.requireNonNull(conf);
+  }
 
   public void addFolder(Path baseSrcDir, Path folder) {
     folders.add(MyUtil.toUnixPath(baseSrcDir, folder));
@@ -31,11 +38,12 @@ public class PackageInfoBuilder {
     if (fileInfo == null) {
       fileInfo = new FileInfo();
       fileInfo.setPathInfos(new LinkedList<>());
-      fileInfo.setSha256(hexSha256);
+      String fileName = hexSha256 + conf.getSuffix(relativePath);
+      fileInfo.setFileName(fileName);
       fileInfo.setSize(bytes.length);
       files.put(hexSha256, fileInfo);
 
-      File newEntryFile = new File(targetDir, hexSha256);
+      File newEntryFile = new File(targetDir, fileName);
       Files.copy(new ByteArrayInputStream(bytes), newEntryFile.toPath());
     }
 
@@ -52,16 +60,20 @@ public class PackageInfoBuilder {
   public String addZipEntry(byte[] bytes, String name, File targetDir) throws IOException {
     String hexSha256 = MyUtil.hexSha256(bytes);
     FileInfo fileInfo = files.get(hexSha256);
+    String fileName;
 
     if (fileInfo == null) {
       fileInfo = new FileInfo();
       fileInfo.setPathInfos(new LinkedList<>());
-      fileInfo.setSha256(hexSha256);
       fileInfo.setSize(bytes.length);
+      fileName = hexSha256 + conf.getSuffix(Paths.get(name));
+      fileInfo.setFileName(fileName);
       files.put(hexSha256, fileInfo);
 
-      File newEntryFile = new File(targetDir, hexSha256);
+      File newEntryFile = new File(targetDir, fileName);
       Files.copy(new ByteArrayInputStream(bytes), newEntryFile.toPath());
+    } else {
+      fileName = fileInfo.getFileName();
     }
 
     String path = "zip:" + name;
@@ -80,7 +92,7 @@ public class PackageInfoBuilder {
       pathInfos.add(pathInfo);
     }
 
-    return hexSha256;
+    return fileName;
   }
 
   public PackageInfo build() {

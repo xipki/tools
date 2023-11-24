@@ -1,7 +1,7 @@
 package org.xipki.apppackage;
 
-import org.xipki.apppackage.jacob.CborDecoder;
-import org.xipki.apppackage.jacob.CborEncoder;
+import org.xipki.apppackage.cbor.CborDecoder;
+import org.xipki.apppackage.cbor.CborEncoder;
 
 import java.io.IOException;
 
@@ -14,7 +14,7 @@ public class ZipEntryInfo {
 
   private long lastModified;
 
-  private String sha256;
+  private String fileName;
 
   private byte[] extra;
 
@@ -58,12 +58,12 @@ public class ZipEntryInfo {
     this.extra = extra;
   }
 
-  public String getSha256() {
-    return sha256;
+  public String getFileName() {
+    return fileName;
   }
 
-  public void setSha256(String sha256) {
-    this.sha256 = sha256;
+  public void setFileName(String fileName) {
+    this.fileName = fileName;
   }
 
   public void encode(CborEncoder encoder) throws IOException {
@@ -90,7 +90,7 @@ public class ZipEntryInfo {
     }
 
     encoder.writeInt(lastModified);
-    encoder.writeTextString(sha256);
+    encoder.writeTextString(fileName);
     if (extra == null) {
       encoder.writeNull();
     } else {
@@ -105,7 +105,7 @@ public class ZipEntryInfo {
     ret.setSize((int) decoder.readInt());
     ret.setComment(MyUtil.readText(decoder));
     ret.setLastModified(decoder.readInt());
-    ret.setSha256(decoder.readTextString());
+    ret.setFileName(decoder.readTextString());
     ret.setExtra(MyUtil.readByteString(decoder));
     return ret;
   }
