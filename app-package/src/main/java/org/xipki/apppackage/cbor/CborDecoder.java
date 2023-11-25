@@ -51,7 +51,7 @@ public class CborDecoder {
     /**
      * Prolog to reading an array value in CBOR format.
      * 
-     * @return the number of elements in the array to read, or <tt>-1</tt> in case of infinite-length arrays.
+     * @return the number of elements in the array to read, or -1 in case of infinite-length arrays.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
     public long readArrayLength() throws IOException {
@@ -75,7 +75,7 @@ public class CborDecoder {
     /**
      * Reads a byte string value in CBOR format.
      *
-     * @return the read byte string, never <code>null</code>. In case the encoded string has a length of <tt>0</tt>, an empty string is returned.
+     * @return the read byte string, never <code>null</code>. In case the encoded string has a length of 0, an empty string is returned.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
     public byte[] readByteString() throws IOException {
@@ -118,7 +118,7 @@ public class CborDecoder {
     /**
      * Reads an UTF-8 encoded string value in CBOR format.
      * 
-     * @return the read UTF-8 encoded string, never <code>null</code>. In case the encoded string has a length of <tt>0</tt>, an empty string is returned.
+     * @return the read UTF-8 encoded string, never <code>null</code>. In case the encoded string has a length of 0, an empty string is returned.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
     public String readTextString() throws IOException {
@@ -136,7 +136,7 @@ public class CborDecoder {
      * Reads the next major type from the underlying input stream, and verifies whether it matches the given expectation.
      * 
      * @param ib the expected major type, cannot be <code>null</code> (unchecked).
-     * @return either <tt>-1</tt> if the major type was an signed integer, or <tt>0</tt> otherwise.
+     * @return either -1 if the major type was an signed integer, or 0 otherwise.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
     protected long expectIntegerType(int ib) throws IOException {
@@ -181,7 +181,7 @@ public class CborDecoder {
      * Reads the next major type from the underlying input stream, verifies whether it matches the given expectation, and decodes the payload into a size.
      * 
      * @param majorType the expected major type, cannot be <code>null</code> (unchecked).
-     * @return the number of succeeding bytes, &gt;= 0, or <tt>-1</tt> if an infinite-length type is read.
+     * @return the number of succeeding bytes, &gt;= 0, or -1 if an infinite-length type is read.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
     protected long readMajorTypeWithSize(int majorType) throws IOException {
@@ -192,6 +192,7 @@ public class CborDecoder {
      * Reads an unsigned integer with a given length-indicator.
      * 
      * @param length the length indicator to use;
+     * @param breakAllowed whether break is allowed.
      * @return the read unsigned integer, as long value.
      * @throws IOException in case of I/O problems reading the unsigned integer from the underlying input stream.
      */

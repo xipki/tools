@@ -23,7 +23,6 @@
     <artifactId>tools-parent</artifactId>
     <version>1.0.10</version>
   </parent>
-  <packaging>bundle</packaging>
   <artifactId>patch-karaf</artifactId>
   <name>XiPKI tools :: ${project.artifactId}</name>
 </project>

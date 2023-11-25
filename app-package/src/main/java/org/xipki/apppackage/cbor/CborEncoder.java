@@ -61,7 +61,7 @@ public class CborEncoder {
     /**
      * Writes a byte string in canonical CBOR-format.
      * 
-     * @param bytes the byte string to write, can be <code>null</code> in which case a byte-string of length <tt>0</tt> is written.
+     * @param bytes the byte string to write, can be <code>null</code> in which case a byte-string of length 0 is written.
      * @throws IOException in case of I/O problems writing the CBOR-encoded value to the underlying output stream.
      */
     public void writeByteString(byte[] bytes) throws IOException {
@@ -101,7 +101,7 @@ public class CborEncoder {
      * using the <em>platform</em> encoding! This means that the encoding must be standardized and known.
      * </p>
      * 
-     * @param value the UTF-8 string to write, can be <code>null</code> in which case an UTF-8 string of length <tt>0</tt> is written.
+     * @param value the UTF-8 string to write, can be <code>null</code> in which case an UTF-8 string of length 0 is written.
      * @throws IOException in case of I/O problems writing the CBOR-encoded value to the underlying output stream.
      */
     public void writeTextString(String value) throws IOException {
@@ -123,7 +123,7 @@ public class CborEncoder {
      * Writes a byte string in canonical CBOR-format.
      * 
      * @param majorType the major type of the string, should be either 0x40 or 0x60;
-     * @param bytes the byte string to write, can be <code>null</code> in which case a byte-string of length <tt>0</tt> is written.
+     * @param bytes the byte string to write, can be <code>null</code> in which case a byte-string of length 0 is written.
      * @throws IOException in case of I/O problems writing the CBOR-encoded value to the underlying output stream.
      */
     protected void writeString(int majorType, byte[] bytes) throws IOException {
