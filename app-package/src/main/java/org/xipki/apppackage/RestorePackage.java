@@ -83,7 +83,6 @@ public class RestorePackage {
             }
             zipOs.putNextEntry(zipEntry);
 
-            System.out.println("filename: " + entryInfo.getFileName());
             Path p0 = new File(srcDir, entryInfo.getFileName()).toPath();
             try {
               zipOs.write(Files.readAllBytes(p0));
