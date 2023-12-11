@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.xipki.tools</groupId>
     <artifactId>tools-parent</artifactId>
-    <version>1.0.11</version>
+    <version>1.0.12</version>
   </parent>
   <artifactId>patch-karaf</artifactId>
   <name>XiPKI tools :: ${project.artifactId}</name>
