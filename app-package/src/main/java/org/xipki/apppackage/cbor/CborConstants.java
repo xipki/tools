@@ -1,6 +1,6 @@
 /*
  * JACOB - CBOR implementation in Java.
- * 
+ *
  * (C) Copyright - 2013 - J.W. Janssen <j.w.janssen@lxtreme.nl>
  *
  * Licensed under Apache License v2.0.
@@ -27,7 +27,7 @@ public interface CborConstants {
     int TYPE_TAG = 0x06;
     /** Major type 7: floating point, simple data types. */
     int TYPE_FLOAT_SIMPLE = 0x07;
-    
+
     /** Denotes a one-byte value (uint8). */
     int ONE_BYTE = 0x18;
     /** Denotes a two-byte value (uint16). */

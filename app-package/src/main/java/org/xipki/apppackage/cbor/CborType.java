@@ -1,6 +1,6 @@
 /*
  * JACOB - CBOR implementation in Java.
- * 
+ *
  * (C) Copyright - 2013 - J.W. Janssen <j.w.janssen@lxtreme.nl>
  *
  * Licensed under Apache License v2.0.
@@ -10,7 +10,8 @@ package org.xipki.apppackage.cbor;
 /**
  * Represents the various major types in CBOR, along with their .
  * <p>
- * The major type is encoded in the upper three bits of each initial byte. The lower 5 bytes represent any additional information.
+ * The major type is encoded in the upper three bits of each initial byte. The lower
+ * 5 bytes represent any additional information.
  * </p>
  */
 public class CborType {
@@ -24,7 +25,7 @@ public class CborType {
 
     /**
      * Returns a descriptive string for the given major type.
-     * 
+     *
      * @param mt the major type to return as string, values from [0..7] are supported.
      * @return the name of the given major type, as String, never <code>null</code>.
      * @throws IllegalArgumentException in case the given major type is not supported.
@@ -54,7 +55,7 @@ public class CborType {
 
     /**
      * Decodes a given byte value to a {@link CborType} value.
-     * 
+     *
      * @param i the input byte (8-bit) to decode into a {@link CborType} instance.
      * @return a {@link CborType} instance, never <code>null</code>.
      */

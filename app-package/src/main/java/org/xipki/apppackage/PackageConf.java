@@ -21,6 +21,10 @@ public class PackageConf {
 
   private Map<String, Integer> posixPermissions;
 
+  private final Set<String> dosLineEncodings;
+
+  private final Set<String> unixLineEncodings;
+
   public PackageConf(File confFile) throws IOException  {
     Properties props = new Properties();
     try (Reader reader = new FileReader(confFile)) {
@@ -54,6 +58,24 @@ public class PackageConf {
         this.posixPermissions.put(MyUtil.toUnixPath(tokens[0]), Integer.parseInt(tokens[1]));
       }
     }
+
+    value = props.getProperty("lineEnding.dos");
+    this.dosLineEncodings = new HashSet<>();
+    if (value != null) {
+      Set<String> _files = splitStr(value);
+      for (String m : _files) {
+        this.dosLineEncodings.add(m.toLowerCase());
+      }
+    }
+
+    value = props.getProperty("lineEnding.unix");
+    this.unixLineEncodings = new HashSet<>();
+    if (value != null) {
+      Set<String> _files = splitStr(value);
+      for (String m : _files) {
+        this.unixLineEncodings.add(m.toLowerCase());
+      }
+    }
   }
 
   public String getSuffix(Path path) {
@@ -80,6 +102,20 @@ public class PackageConf {
     String str = getMatchElement(baseDir, filePath, getExtension(filePath.getFileName().toString()),
         posixPermissions.keySet());
     return str == null ? null : posixPermissions.get(str);
+  }
+
+  public boolean isDosLineEncoding(Path baseDir, Path filePath)
+  {
+    String extension = getExtension(filePath.getFileName().toString());
+    String path = getMatchElement(baseDir, filePath, extension, dosLineEncodings);
+    return path != null;
+  }
+
+  public boolean isUnixLineEncoding(Path baseDir, Path filePath)
+  {
+    String extension = getExtension(filePath.getFileName().toString());
+    String path = getMatchElement(baseDir, filePath, extension, unixLineEncodings);
+    return path != null;
   }
 
   private static String getMatchElement(Path baseDir, Path filePath, String extension, Collection<String> coll) {

@@ -1,6 +1,6 @@
 /*
  * JACOB - CBOR implementation in Java.
- * 
+ *
  * (C) Copyright - 2013 - J.W. Janssen <j.w.janssen@lxtreme.nl>
  */
 package org.xipki.apppackage.cbor;
@@ -18,7 +18,7 @@ public class CborDecoder {
 
     /**
      * Creates a new {@link CborDecoder} instance.
-     * 
+     *
      * @param is the actual input stream to read the CBOR-encoded data from, cannot be <code>null</code>.
      */
     public CborDecoder(InputStream is) {
@@ -34,7 +34,7 @@ public class CborDecoder {
 
     /**
      * Peeks in the input stream for the upcoming type.
-     * 
+     *
      * @return the upcoming type in the stream, or <code>null</code> in case of an end-of-stream.
      * @throws IOException in case of I/O problems reading the CBOR-type from the underlying input stream.
      */
@@ -50,7 +50,7 @@ public class CborDecoder {
 
     /**
      * Prolog to reading an array value in CBOR format.
-     * 
+     *
      * @return the number of elements in the array to read, or -1 in case of infinite-length arrays.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
@@ -60,7 +60,7 @@ public class CborDecoder {
 
     /**
      * Reads a boolean value in CBOR format.
-     * 
+     *
      * @return the read boolean.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
@@ -75,7 +75,8 @@ public class CborDecoder {
     /**
      * Reads a byte string value in CBOR format.
      *
-     * @return the read byte string, never <code>null</code>. In case the encoded string has a length of 0, an empty string is returned.
+     * @return the read byte string, never <code>null</code>. In case the encoded string has a length of 0, an
+     *         empty string is returned.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
     public byte[] readByteString() throws IOException {
@@ -91,7 +92,7 @@ public class CborDecoder {
 
     /**
      * Reads a signed or unsigned integer value in CBOR format.
-     * 
+     *
      * @return the read integer value, values from {@link Long#MIN_VALUE} to {@link Long#MAX_VALUE} are supported.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
@@ -106,7 +107,7 @@ public class CborDecoder {
 
     /**
      * Reads a <code>null</code>-value in CBOR format.
-     * 
+     *
      * @return always <code>null</code>.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
@@ -117,8 +118,9 @@ public class CborDecoder {
 
     /**
      * Reads an UTF-8 encoded string value in CBOR format.
-     * 
-     * @return the read UTF-8 encoded string, never <code>null</code>. In case the encoded string has a length of 0, an empty string is returned.
+     *
+     * @return the read UTF-8 encoded string, never <code>null</code>. In case the encoded string has a length of
+     *         0, an empty string is returned.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
      */
     public String readTextString() throws IOException {
@@ -133,8 +135,9 @@ public class CborDecoder {
     }
 
     /**
-     * Reads the next major type from the underlying input stream, and verifies whether it matches the given expectation.
-     * 
+     * Reads the next major type from the underlying input stream, and verifies whether it matches the given
+     * expectation.
+     *
      * @param ib the expected major type, cannot be <code>null</code> (unchecked).
      * @return either -1 if the major type was an signed integer, or 0 otherwise.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
@@ -142,15 +145,17 @@ public class CborDecoder {
     protected long expectIntegerType(int ib) throws IOException {
         int majorType = ((ib & 0xFF) >>> 5);
         if ((majorType != CborConstants.TYPE_UNSIGNED_INTEGER) && (majorType != CborConstants.TYPE_NEGATIVE_INTEGER)) {
-            fail("Unexpected type: %s, expected type %s or %s!", CborType.getName(majorType), CborType.getName(CborConstants.TYPE_UNSIGNED_INTEGER),
+            fail("Unexpected type: %s, expected type %s or %s!", CborType.getName(majorType),
+                CborType.getName(CborConstants.TYPE_UNSIGNED_INTEGER),
                 CborType.getName(CborConstants.TYPE_NEGATIVE_INTEGER));
         }
         return -majorType;
     }
 
     /**
-     * Reads the next major type from the underlying input stream, and verifies whether it matches the given expectation.
-     * 
+     * Reads the next major type from the underlying input stream, and verifies whether it matches the given
+     * expectation.
+     *
      * @param majorType the expected major type, cannot be <code>null</code> (unchecked).
      * @return the read subtype, or payload, of the read major type.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
@@ -164,8 +169,9 @@ public class CborDecoder {
     }
 
     /**
-     * Reads the next major type from the underlying input stream, and verifies whether it matches the given expectations.
-     * 
+     * Reads the next major type from the underlying input stream, and verifies whether it matches the given
+     * expectations.
+     *
      * @param majorType the expected major type, cannot be <code>null</code> (unchecked);
      * @param subtype the expected subtype.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
@@ -178,8 +184,9 @@ public class CborDecoder {
     }
 
     /**
-     * Reads the next major type from the underlying input stream, verifies whether it matches the given expectation, and decodes the payload into a size.
-     * 
+     * Reads the next major type from the underlying input stream, verifies whether it matches the given
+     * expectation, and decodes the payload into a size.
+     *
      * @param majorType the expected major type, cannot be <code>null</code> (unchecked).
      * @return the number of succeeding bytes, &gt;= 0, or -1 if an infinite-length type is read.
      * @throws IOException in case of I/O problems reading the CBOR-encoded value from the underlying input stream.
@@ -190,7 +197,7 @@ public class CborDecoder {
 
     /**
      * Reads an unsigned integer with a given length-indicator.
-     * 
+     *
      * @param length the length indicator to use;
      * @param breakAllowed whether break is allowed.
      * @return the read unsigned integer, as long value.
@@ -219,7 +226,7 @@ public class CborDecoder {
 
     /**
      * Reads an unsigned 16-bit integer value
-     * 
+     *
      * @return value the read value, values from {@link Long#MIN_VALUE} to {@link Long#MAX_VALUE} are supported.
      * @throws IOException in case of I/O problems writing the CBOR-encoded value to the underlying output stream.
      */
@@ -230,7 +237,7 @@ public class CborDecoder {
 
     /**
      * Reads an unsigned 32-bit integer value
-     * 
+     *
      * @return value the read value, values from {@link Long#MIN_VALUE} to {@link Long#MAX_VALUE} are supported.
      * @throws IOException in case of I/O problems writing the CBOR-encoded value to the underlying output stream.
      */
@@ -241,7 +248,7 @@ public class CborDecoder {
 
     /**
      * Reads an unsigned 64-bit integer value
-     * 
+     *
      * @return value the read value, values from {@link Long#MIN_VALUE} to {@link Long#MAX_VALUE} are supported.
      * @throws IOException in case of I/O problems writing the CBOR-encoded value to the underlying output stream.
      */
@@ -253,7 +260,7 @@ public class CborDecoder {
 
     /**
      * Reads an unsigned 8-bit integer value
-     * 
+     *
      * @return value the read value, values from {@link Long#MIN_VALUE} to {@link Long#MAX_VALUE} are supported.
      * @throws IOException in case of I/O problems writing the CBOR-encoded value to the underlying output stream.
      */

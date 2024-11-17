@@ -141,7 +141,6 @@ public class MyUtil {
     }
   }
 
-
   public static List<String> readTextList(CborDecoder decoder) throws IOException {
     if (MyUtil.isNull(decoder)) {
       decoder.readNull();
