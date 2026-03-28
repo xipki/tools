@@ -31,10 +31,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Maven goal that resolves the configured root artifacts and copies them together with their
+ * transitive dependencies into the target output directory.
+ */
 @Mojo(name = "download", defaultPhase = LifecyclePhase.NONE, threadSafe = true,
     requiresProject = true)
 public class DownloadDepsMojo extends AbstractMojo {
 
+  /**
+   * Plugin configuration for one root artifact to resolve and copy.
+   */
   public static class ArtifactItem {
 
     @Parameter(required = true)
