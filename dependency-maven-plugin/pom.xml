@@ -15,6 +15,18 @@
     <developerConnection>scm:git:https://github.com/xipki/tools.git</developerConnection>
     <url>https://github.com/xipki/tools</url>
   </scm>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>project-owner</id>
+      <name>Lijun Liao (xipki)</name>
+    </developer>
+  </developers>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.source-plugin.version>3.4.0</maven.source-plugin.version>
